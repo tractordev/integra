@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -17,6 +18,8 @@ var (
 	showResources bool
 	showProps     bool
 	showOps       bool
+
+	accountData bool
 )
 
 func describeTabWriter() *tabwriter.Writer {
@@ -89,6 +92,7 @@ func describeCmd() *cli.Command {
 			os.Exit(1)
 		},
 	}
+	cmd.Flags().BoolVar(&accountData, "account", false, "only account data")
 	cmd.Flags().BoolVar(&showInfo, "info", false, "show info")
 	cmd.Flags().BoolVar(&showResources, "resources", false, "show resources")
 	cmd.Flags().BoolVar(&showOps, "methods", false, "show methods")
@@ -117,8 +121,14 @@ func describeServiceInfo(s integra.Service) {
 }
 
 func describeServiceResources(s integra.Service) {
+	res := s.Resources()
+	if accountData {
+		res = slices.DeleteFunc(res, func(r integra.Resource) bool {
+			return r.DataScope() != "account"
+		})
+	}
 	tagGroups := make(map[string][]integra.Resource)
-	for _, r := range s.Resources() {
+	for _, r := range res {
 		for _, tag := range r.Tags() {
 			tagGroups[tag] = append(tagGroups[tag], r)
 		}
@@ -126,7 +136,7 @@ func describeServiceResources(s integra.Service) {
 
 	// if no tags, just list resources
 	if len(tagGroups) == 0 {
-		for _, r := range s.Resources() {
+		for _, r := range res {
 			fmt.Println(r.Name())
 		}
 		fmt.Println()

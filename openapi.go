@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -105,24 +106,44 @@ func (s *openapiService) Resources() []Resource {
 		return nil
 	}
 
+	accountPatterns := AsOrZero[[]string](s.meta.Get("accountData"))
+	shouldPrefix := s.DataScope() == "mixed"
+
 	var res []*openapiResource
 	resLookup := make(map[string]*openapiResource)
-	for _, path := range paths.Keys() {
-		name := ToResourceName(path)
+	for _, p := range paths.Keys() {
+		name := ToResourceName(p)
+
+		for _, pattern := range accountPatterns {
+			if ok, _ := regexp.MatchString(pattern, p); ok {
+				if strings.Contains(pattern, ".*") {
+					name = ToResourceName(strings.Replace(p, strings.Trim(pattern, "^.*"), "", 1))
+				}
+				if shouldPrefix {
+					name = fmt.Sprintf("~%s", name)
+				}
+				break
+			}
+		}
 		if name == "" {
 			continue
 		}
 		if _, exists := resLookup[name]; !exists {
+			var dataScope string
+			if s.DataScope() == "account" || strings.HasPrefix(name, "~") {
+				dataScope = "account"
+			}
 			r := &openapiResource{
-				name:    name,
-				service: s,
-				paths:   make(map[string]*Value),
+				name:      name,
+				dataScope: dataScope,
+				service:   s,
+				paths:     make(map[string]*Value),
 			}
 			res = append(res, r)
 			resLookup[name] = r
 		}
 		r := resLookup[name]
-		r.paths[path] = paths.Get(path)
+		r.paths[p] = paths.Get(p)
 	}
 
 	for _, r := range resLookup {
@@ -205,6 +226,7 @@ type openapiResource struct {
 	name           string
 	parent         *openapiResource
 	service        *openapiService
+	dataScope      string
 	paths          map[string]*Value
 	itemPath       string
 	collectionPath string
@@ -230,7 +252,11 @@ func (r *openapiResource) Name() string {
 }
 
 func (r *openapiResource) Title() string {
-	return strings.Title(r.name)
+	return strings.Title(strings.Trim(r.name, "~"))
+}
+
+func (r *openapiResource) DataScope() string {
+	return r.dataScope
 }
 
 func (r *openapiResource) Description() string {

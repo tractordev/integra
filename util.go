@@ -18,10 +18,20 @@ var acronyms = map[string]bool{
 	"ip":  true,
 	"ssh": true,
 	"gpg": true,
+	"sql": true,
+	"ca":  true,
+	"db":  true,
+	"pdf": true,
+	"csv": true,
+	"cpu": true,
+	"id":  true,
 }
 
 var invariants = map[string]bool{
-	"media": true,
+	"media":      true,
+	"previous":   true,
+	"dangerous":  true,
+	"kubernetes": true,
 }
 
 func isAcronym(s string) bool {

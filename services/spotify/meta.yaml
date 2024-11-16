@@ -1,1 +1,4 @@
 latest: "1"
+accountData:
+  - ^/me$
+  - ^/me/.*

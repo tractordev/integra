@@ -130,6 +130,13 @@ func (r *googleResource) Title() string {
 	return strings.Title(r.name)
 }
 
+func (r *googleResource) DataScope() string {
+	if r.service.DataScope() == "account" {
+		return "account"
+	}
+	return ""
+}
+
 func (r *googleResource) Description() string {
 	schema := r.schema.Get("methods", "get", "response")
 	if schema.IsNil() {

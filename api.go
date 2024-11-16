@@ -25,6 +25,7 @@ type Resource interface {
 	Name() string
 	Title() string
 	Description() string
+	DataScope() string
 	CollectionURL() string
 	ItemURL() string
 	Tags() []string
