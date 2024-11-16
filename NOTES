@@ -1,0 +1,19 @@
+TODO
+- 
+
+- fix github paths
+- fix digitalocean paths
+
+- selecting into schemas, detailed props
+- update call, try call with google services
+
+- perform gets
+
+
+====
+dataScope: account|mixed| .. shared|public? 
+sharedData:
+  - 
+accountData:
+  - /user
+  - /user/*

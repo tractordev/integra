@@ -1,0 +1,33 @@
+
+methods use "x-spotify-docs-endpoint-name" as "summary"
+x-spotify-docs-endpoint-name: Start/Resume a User's Playback
+
+===
+
+paths have extensions:
+
+x-spotify-docs-category: Player
+x-spotify-docs-display-name: play
+
+===
+
+has at least one resource that is both collection and item:
+/playlists/{playlist_id}/tracks
+
+===
+
+example of what looks like an item but is collection:
+/users/{user_id}/playlists
+
+===
+operationId's are formatted in a way the first word is
+a reasonable operation name:
+
+(few examples)
+skip-users-playback-to-next-track
+pause-a-users-playback
+start-a-users-playback
+skip-users-playback-to-previous-track
+get-queue
+add-to-queue
+get-recently-played

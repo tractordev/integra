@@ -1,0 +1,42 @@
+there *are* openapi schemas for google apis in APIs-guru directory,
+BUT google's schema is closer to our internal schema and is easier to work with.
+===
+https://developers.google.com/discovery/v1/reference/apis
+====
+
+"insert" operations should maybe be normalized to "create"?
+
+====
+
+should Colors "get" become "list" or should the Item URL be the Collection URL?
+
+% integra describe google-calendar.color  
+=== RESOURCE INFO
+Title:       Colors
+Item URL:    https://www.googleapis.com/calendar/v3/colors
+
+=== RESOURCE OPERATIONS
+get    Returns the color definitions for calendars and events
+
+
+====
+
+in calendar, "calendarList" is converted to "calendarlist" .. maybe this is fine
+
+===
+
+from calendar's CalendarList schema (more of a response type than output)
+
+"nextPageToken": {
+            "type": "string",
+            "description": "Token used to access the next page of this result. Omitted if no further results are available, in which case nextSyncToken is provided."
+          },
+
+===
+keeep
+
+media.download just has metadata, so downloading a file must be extra?
+this data seems to mark operations where this is the case
+
+"supportsMediaDownload": true,
+"useMediaDownloadService": true,

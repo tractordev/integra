@@ -1,0 +1,4 @@
+latest: "1"
+accountData:
+  - /user
+  - /user/*

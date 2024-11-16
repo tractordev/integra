@@ -1,0 +1,124 @@
+get: wraps in object with key name of resource (floating_ip, image, etc)
+
+listings:
+
+per_page: integer (in: query)
+page: integer (in: query)
+
+{
+  "images": [
+    
+  ],
+  "links": {
+    "pages": {
+      "last": "https://api.digitalocean.com/v2/images?page=14",
+      "next": "https://api.digitalocean.com/v2/images?page=2"
+    }
+  },
+  "meta": {
+    "total": 264
+  }
+}
+
+====
+operationIDs are almost consistent enough to get operation names AND resources...
+examples where it works easily:
+
+vpcs_list
+vpcs_create
+vpcs_delete
+vpcs_get
+vpcs_patch
+vpcs_update
+vpcs_list_members
+
+tags_list
+tags_create
+tags_delete
+tags_get
+tags_unassign_resources
+tags_assign_resources
+
+where it works but has.. quirks:
+
+volumeActions_post
+volumeSnapshots_delete_byId
+volumeSnapshots_get_byId
+
+projects_list
+projects_create
+projects_get_default
+projects_patch_default
+projects_update_default
+projects_list_resources_default
+projects_assign_resources_default
+
+invoices_get_byUUID
+invoices_get_csvByUUID
+invoices_get_pdfByUUID
+invoices_get_summaryByUUID
+
+registry_update_subscription
+registry_validate_name
+registry_get_garbageCollection
+registry_run_garbageCollection
+registry_update_garbageCollection
+registry_list_garbageCollections
+registry_list_repositories
+registry_list_repositoriesV2
+registry_list_repositoryManifests
+registry_delete_repositoryManifest
+registry_list_repositoryTags
+registry_delete_repositoryTag
+
+=====
+
+2024/11/15 17:59:33 openapi.go:133: !! more than 2 paths for 'registryGarbageCollection':
+2024/11/15 17:59:33 openapi.go:135:    /v2/registry/{registry_name}/garbage-collection get,post
+2024/11/15 17:59:33 openapi.go:135:    /v2/registry/{registry_name}/garbage-collection/{garbage_collection_uuid} put
+2024/11/15 17:59:33 openapi.go:135:    /v2/registry/{registry_name}/garbage-collections get
+
+registryGarbageCollection
+    list
+    get
+    create
+    setWithGarbageCollectionUUID
+
+------
+
+2024/11/15 17:59:33 openapi.go:179: !! undetectable paths for 'appMetricBandwidthDaily':
+2024/11/15 17:59:33 openapi.go:181:    /v2/apps/metrics/bandwidth_daily  post (report)
+2024/11/15 17:59:33 openapi.go:181:    /v2/apps/{app_id}/metrics/bandwidth_daily get
+
+appMetric??
+appMetricBandwidthDaily
+    create
+    get
+
+
+----
+2024/11/15 17:59:33 openapi.go:133: !! more than 2 paths for 'volumeAction':
+2024/11/15 17:59:33 openapi.go:135:    /v2/volumes/actions
+2024/11/15 17:59:33 openapi.go:135:    /v2/volumes/{volume_id}/actions
+2024/11/15 17:59:33 openapi.go:135:    /v2/volumes/{volume_id}/actions/{action_id}
+
+2024/11/15 17:59:33 openapi.go:133: !! more than 2 paths for 'dropletAction':
+2024/11/15 17:59:33 openapi.go:135:    /v2/droplets/actions post(bulk)
+2024/11/15 17:59:33 openapi.go:135:    /v2/droplets/{droplet_id}/actions get,post
+2024/11/15 17:59:33 openapi.go:135:    /v2/droplets/{droplet_id}/actions/{action_id} get
+
+DropletAction
+    list
+    create
+    get
+    createBulk??
+
+----
+
+2024/11/15 17:59:33 openapi.go:179: !! undetectable paths for 'kuberneteClusterUpgrade':
+2024/11/15 17:59:33 openapi.go:181:    /v2/kubernetes/clusters/{cluster_id}/upgrade post
+2024/11/15 17:59:33 openapi.go:181:    /v2/kubernetes/clusters/{cluster_id}/upgrades get
+
+kubernetesClusterUpgrade
+    list
+    create

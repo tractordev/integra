@@ -1,0 +1,222 @@
+github: user.list => user.get (no params)
+
+listing params 
+    - page
+    - per_page
+    - direction
+    - sort
+
+listing output
+    array?!
+    full objects
+
+no security info in schema
+
+===
+
+concept of $self: /user paths vs others?
+
+===
+
+-----
+
+!! more than 2 paths for 'userGPGKey':
+2024/11/15 14:07:37 openapi.go:135:    /user/gpg_keys get,post
+2024/11/15 14:07:37 openapi.go:135:    /user/gpg_keys/{gpg_key_id} delete,get
+2024/11/15 14:07:37 openapi.go:135:    /users/{username}/gpg_keys get
+
+selfGPGKey
+_gpgKey
+    get
+    create
+    delete
+    list
+
+userGPGKey
+    get(username)
+    
+
+!! more than 2 paths for 'user':
+2024/11/15 14:07:37 openapi.go:135:    /users/{username} get
+2024/11/15 14:07:37 openapi.go:135:    /user get,patch
+2024/11/15 14:07:37 openapi.go:135:    /users get
+
+user
+    list
+    get
+
+_user
+    get
+    patch
+
+!! more than 2 paths for 'userSSHSigningKey':
+2024/11/15 14:07:37 openapi.go:135:    /user/ssh_signing_keys
+2024/11/15 14:07:37 openapi.go:135:    /user/ssh_signing_keys/{ssh_signing_key_id}
+2024/11/15 14:07:37 openapi.go:135:    /users/{username}/ssh_signing_keys
+
+_sshSigningKey
+userSSHSigningKey
+
+!! more than 2 paths for 'userKey':
+2024/11/15 14:07:37 openapi.go:135:    /user/keys
+2024/11/15 14:07:37 openapi.go:135:    /user/keys/{key_id}
+2024/11/15 14:07:37 openapi.go:135:    /users/{username}/keys
+
+---
+
+!! more than 2 paths for 'repoIssueEvent':
+2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/issues/events
+2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/issues/events/{event_id}
+2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/issues/{issue_number}/events
+
+!! more than 2 paths for 'repoPullComment':
+2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/pulls/comments
+2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/pulls/comments/{comment_id}
+2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/pulls/{pull_number}/comments
+
+repoPullComment
+    list
+    get
+    delete
+    patch
+    create
+    listForPullNumber
+
+!! more than 2 paths for 'repoIssueComment':
+2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/issues/comments get
+2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/issues/comments/{comment_id} delete,get,patch
+2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/issues/{issue_number}/comments get,post
+
+repoIssueComment
+    list  list-comments-for-repo
+    listForIssueNumber  list-comments
+    delete
+    get
+    update
+    create
+
+-----
+
+!! more than 2 paths for 'repoActionArtifact':
+2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/actions/artifacts/{artifact_id} delete,get
+2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/actions/artifacts/{artifact_id}/{archive_format} get
+2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/actions/artifacts get
+
+repoActionArtifact
+    delete
+    get
+    list
+    getWithArchiveFormat?
+
+(similarish)
+!! more than 2 paths for 'gist':
+2024/11/15 14:07:37 openapi.go:135:    /gists/{gist_id} delete,get,patch
+2024/11/15 14:07:37 openapi.go:135:    /gists/{gist_id}/{sha} (revision) get
+2024/11/15 14:07:37 openapi.go:135:    /gists get,post
+
+_gist
+    delete
+    get
+    patch
+    list
+    create
+    getWithSHA
+
+----
+
+two item URLS
+
+!! more than 2 paths for 'repoGitRef':
+2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/git/ref/{ref} get
+2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/git/refs post
+2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/git/refs/{ref} delete,patch
+
+
+---
+
+EXAMPLE of itemURL without path param
+
+!! undetectable paths for 'repoCommitStatus':
+2024/11/15 14:07:37 openapi.go:181:    /repos/{owner}/{repo}/commits/{ref}/status get
+2024/11/15 14:07:37 openapi.go:181:    /repos/{owner}/{repo}/commits/{ref}/statuses get
+
+
+!! undetectable paths for 'orgInstallation':
+2024/11/15 14:07:37 openapi.go:181:    /orgs/{org}/installation get
+2024/11/15 14:07:37 openapi.go:181:    /orgs/{org}/installations get
+
+
+---
+
+should be fixed with dataScope
+
+
+!! undetectable paths for 'userOrg':
+2024/11/15 14:07:37 openapi.go:181:    /user/orgs
+2024/11/15 14:07:37 openapi.go:181:    /users/{username}/orgs
+
+!! undetectable paths for 'userInstallation':
+2024/11/15 14:07:37 openapi.go:181:    /users/{username}/installation
+2024/11/15 14:07:37 openapi.go:181:    /user/installations
+
+!! undetectable paths for 'userFollower':
+2024/11/15 14:07:37 openapi.go:181:    /users/{username}/followers
+2024/11/15 14:07:37 openapi.go:181:    /user/followers
+
+!! undetectable paths for 'userProject':
+2024/11/15 14:07:37 openapi.go:181:    /user/projects
+2024/11/15 14:07:37 openapi.go:181:    /users/{username}/projects
+
+!! undetectable paths for 'userRepo':
+2024/11/15 14:07:37 openapi.go:181:    /user/repos
+2024/11/15 14:07:37 openapi.go:181:    /users/{username}/repos
+
+!! undetectable paths for 'userSubscription':
+2024/11/15 14:07:37 openapi.go:181:    /user/subscriptions
+2024/11/15 14:07:37 openapi.go:181:    /users/{username}/subscriptions
+
+!! more than 2 paths for 'userFollowing':
+2024/11/15 14:07:37 openapi.go:135:    /user/following
+2024/11/15 14:07:37 openapi.go:135:    /user/following/{username}
+
+2024/11/15 14:07:37 openapi.go:135:    /users/{username}/following/{target_user}
+2024/11/15 14:07:37 openapi.go:135:    /users/{username}/following
+
+
+!! undetectable paths for 'userPackageRestore':
+2024/11/15 14:07:37 openapi.go:181:    /users/{username}/packages/{package_type}/{package_name}/restore
+2024/11/15 14:07:37 openapi.go:181:    /user/packages/{package_type}/{package_name}/restore
+
+!! undetectable paths for 'userPackageVersionRestore':
+2024/11/15 14:07:37 openapi.go:181:    /users/{username}/packages/{package_type}/{package_name}/versions/{package_version_id}/restore
+2024/11/15 14:07:37 openapi.go:181:    /user/packages/{package_type}/{package_name}/versions/{package_version_id}/restore
+
+!! more than 2 paths for 'userPackageVersion':
+2024/11/15 14:07:37 openapi.go:135:    /users/{username}/packages/{package_type}/{package_name}/versions/{package_version_id}
+2024/11/15 14:07:37 openapi.go:135:    /user/packages/{package_type}/{package_name}/versions
+2024/11/15 14:07:37 openapi.go:135:    /user/packages/{package_type}/{package_name}/versions/{package_version_id}
+2024/11/15 14:07:37 openapi.go:135:    /users/{username}/packages/{package_type}/{package_name}/versions
+
+!! more than 2 paths for 'userPackage':
+2024/11/15 14:07:37 openapi.go:135:    /users/{username}/packages/{package_type}/{package_name}
+2024/11/15 14:07:37 openapi.go:135:    /user/packages
+2024/11/15 14:07:37 openapi.go:135:    /user/packages/{package_type}/{package_name}
+2024/11/15 14:07:37 openapi.go:135:    /users/{username}/packages
+
+
+!! more than 2 paths for 'userStarred':
+2024/11/15 14:07:37 openapi.go:135:    /users/{username}/starred get
+
+userStarred
+    list
+
+2024/11/15 14:07:37 openapi.go:135:    /user/starred/{owner}/{repo} get,delete,put (starring actions, get is check)
+2024/11/15 14:07:37 openapi.go:135:    /user/starred
+
+_starred
+    list
+    get (check?)
+    delete
+    put
+
+
