@@ -242,7 +242,7 @@ func (r *openapiResource) Description() string {
 	if schema.IsNil() {
 		return ""
 	}
-	return AsOrZero[string](schema.Get("description"))
+	return strings.TrimSpace(AsOrZero[string](schema.Get("description")))
 
 }
 
@@ -360,15 +360,15 @@ func (o *openapiOperation) Name() string {
 }
 
 func (o *openapiOperation) ID() string {
-	return MustAs[string](o.schema.Get("operationId"))
+	return AsOrZero[string](o.schema.Get("operationId"))
 }
 
 func (o *openapiOperation) Description() string {
 	summary := AsOrZero[string](o.schema.Get("summary"))
 	if summary != "" {
-		return summary
+		return strings.TrimSpace(summary)
 	}
-	return MustAs[string](o.schema.Get("description"))
+	return strings.TrimSpace(AsOrZero[string](o.schema.Get("description")))
 }
 
 func (o *openapiOperation) URL() string {
@@ -386,11 +386,11 @@ func (o *openapiOperation) Method() string {
 }
 
 func (o *openapiOperation) Tags() []string {
-	return MustAs[[]string](o.schema.Get("tags"))
+	return AsOrZero[[]string](o.schema.Get("tags"))
 }
 
 func (o *openapiOperation) DocsURL() string {
-	return MustAs[string](o.schema.Get("externalDocs", "url"))
+	return AsOrZero[string](o.schema.Get("externalDocs", "url"))
 }
 
 func (o *openapiOperation) Security() (schemes []string) {
@@ -581,7 +581,7 @@ func (s *openapiSchema) Title() string {
 }
 
 func (s *openapiSchema) Description() string {
-	return AsOrZero[string](s.schema.Get("description"))
+	return strings.TrimSpace(AsOrZero[string](s.schema.Get("description")))
 }
 
 func (s *openapiSchema) Type() string {

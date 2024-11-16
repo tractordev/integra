@@ -225,11 +225,11 @@ func (o *googleOperation) Name() string {
 }
 
 func (o *googleOperation) ID() string {
-	return MustAs[string](o.schema.Get("id"))
+	return AsOrZero[string](o.schema.Get("id"))
 }
 
 func (o *googleOperation) Description() string {
-	return MustAs[string](o.schema.Get("description"))
+	return AsOrZero[string](o.schema.Get("description"))
 }
 
 func (o *googleOperation) URL() string {
@@ -247,7 +247,7 @@ func (o *googleOperation) URL() string {
 }
 
 func (o *googleOperation) Method() string {
-	return MustAs[string](o.schema.Get("httpMethod"))
+	return AsOrZero[string](o.schema.Get("httpMethod"))
 }
 
 func (o *googleOperation) Tags() []string {
@@ -263,7 +263,7 @@ func (o *googleOperation) Security() []string {
 }
 
 func (o *googleOperation) Scopes() []string {
-	return MustAs[[]string](o.schema.Get("scopes"))
+	return AsOrZero[[]string](o.schema.Get("scopes"))
 }
 
 func (o *googleOperation) Parameters() (params []Schema) {
