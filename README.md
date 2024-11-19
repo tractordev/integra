@@ -7,21 +7,23 @@ make build
 ```
 This will build the Integra executable and put it at `./local/integra`. You can
 put it into your PATH or run it from there. To match examples below, you should
-move it to a PATH directory like `/usr/loca/bin`.
+move it to a PATH directory like `/usr/local/bin`.
 
 ## Working Services
+
+This project is still experimental, piloting with these services:
 
 * github
 * digitalocean
 * spotify
 * google-calendar
 
-There is also `google-keep`, but it can only be described/inspected. Using the API is
+There is also `google-keep`, but it can only be described/inspected. Using this API is
 only available to Google enterprise users so it is not yet supported.
 
 ## Authentication
 
-The `integra call` and `integra fetch` commands require authentication. This is
+The `integra call` and `integra fetch` commands will need authentication. This is
 still a mostly manual process for each service that involves getting an access token
 and setting it as an environment variable before using these commands.
 
@@ -37,12 +39,16 @@ and set it in your environment as `DIGITALOCEAN_TOKEN`.
 
 #### spotify
 
-If you don't have OAuth client credentials, you need to [make an app](https://developer.spotify.com/dashboard)
+<details>
+<summary>If you don't have OAuth client credentials...</summary>
+
+you need to [make an app](https://developer.spotify.com/dashboard)
 in the Spotify Developer Dashboard. It should be set up for "Web API" and "Web Playback API". It should
 also have a Redirect URI of `http://localhost:4532/auth/callback`. You want the Client ID and Client Secret
 from the app settings once created.
+</details>
 
-Once you have OAuth client credentials, set them in your environment as `SPOTIFY_CLIENT_ID`
+With Spotify OAuth client credentials, set them in your environment as `SPOTIFY_CLIENT_ID`
 and `SPOTIFY_CLIENT_SECRET`. Now run:
 ```
 integra auth spotify
@@ -53,7 +59,10 @@ set in your environment as `SPOTIFY_TOKEN`.
 
 #### google-calendar
 
-If you don't have Google client credentials, you need to [create a project](https://console.cloud.google.com/projectcreate) on the Google API Console. Enable the "Google Calendar API" for the project by 
+<details>
+<summary>If you don't have a Google client credentials JSON file...</summary>
+
+you need to [create a project](https://console.cloud.google.com/projectcreate) on the Google API Console. Enable the "Google Calendar API" for the project by 
 searching for it in the [API Library](https://console.cloud.google.com/apis/library) 
 making sure the new project selected in the top bar. Click the result and then the "Enable" button. Now 
 [create an OAuth client ID](https://console.cloud.google.com/apis/credentials/oauthclient)
@@ -61,8 +70,9 @@ with Application Type of "Web application" and an Authorized redirect URI of
 `http://localhost:4532/auth/callback`. Download the `client_secret.json` file from the API Console.
 
 There are expanded instructions [here](https://developers.google.com/identity/protocols/oauth2/web-server#enable-apis).
+</details>
 
-With the credentials JSON file, open it with a text editor and copy the single line contents into the clipboard. Then
+With a credentials JSON file, open it with a text editor and copy the single line contents into the clipboard. Then
 set it in your environment as `GOOGLE_CLIENT_JSON` using single quotes, like this:
 ```
 export GOOGLE_CLIENT_JSON='<json data here>'
