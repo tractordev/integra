@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -47,8 +48,9 @@ func ServiceToken(service string) string {
 	return os.Getenv(fmt.Sprintf("%s_TOKEN", service))
 }
 
-func LoadServiceSchema(service, version string) (map[string]any, error) {
-	return nil, nil
+func ServiceClientCredentials(service string) (string, string) {
+	service = strings.ReplaceAll(strings.ToUpper(service), "-", "_")
+	return os.Getenv(fmt.Sprintf("%s_CLIENT_ID", service)), os.Getenv(fmt.Sprintf("%s_CLIENT_SECRET", service))
 }
 
 func LoadService(name, version string) (Service, error) {
@@ -114,4 +116,69 @@ func LoadService(name, version string) (Service, error) {
 	}
 
 	return nil, fmt.Errorf("no schema found for %s@%s", name, version)
+}
+
+func ExpandURL(u string, params map[string]any) (string, error) {
+	for k, v := range params {
+		u = strings.Replace(u, fmt.Sprintf("{%s}", k), fmt.Sprint(v), 1)
+	}
+	if strings.Contains(u, "{") {
+		return "", fmt.Errorf("parameters not sufficient to expand URL: %s", u)
+	}
+	return u, nil
+}
+
+func MakeRequest(op Operation, data map[string]any) (*http.Request, error) {
+
+	var required []string
+	for _, p := range op.Parameters() {
+		if p.Required() {
+			required = append(required, p.Name())
+		}
+	}
+
+	for _, name := range required {
+		_, ok := data[name]
+		if !ok {
+			return nil, fmt.Errorf("missing '%s' of required parameters: %v", name, required)
+		}
+	}
+
+	params := make(map[string]any)
+	for _, p := range op.Parameters() {
+		v, ok := data[p.Name()]
+		if ok {
+			params[p.Name()] = v
+			delete(data, p.Name())
+		}
+	}
+	u, err := ExpandURL(op.URL(), params)
+	if err != nil {
+		return nil, err
+	}
+
+	// var body io.Reader
+	// if slices.Contains([]string{"create", "set", "update"}, op.Name()) {
+	// 	b, err := json.Marshal(params)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	body = bytes.NewBuffer(b)
+	// }
+
+	// todo: need to populate url since implementing new model
+	req, err := http.NewRequest(strings.ToUpper(op.Method()), u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// todo: alternative schemes
+	token := ServiceToken(op.Resource().Service().Name())
+	if token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	return req, nil
 }

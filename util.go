@@ -5,11 +5,10 @@ import (
 	"log"
 	"reflect"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/jinzhu/inflection"
-	"github.com/pb33f/libopenapi/datamodel/high/base"
-	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 )
 
 var acronyms = map[string]bool{
@@ -71,6 +70,120 @@ func toCamelCase(s string) string {
 	return strings.Join(words, "")
 }
 
+// SplitWords splits a string into words based on separators and casing rules.
+func SplitWords(input string) []string {
+	// Replace non-alphanumeric separators with a single space
+	re := regexp.MustCompile(`[\s_\-/]+`)
+	cleaned := re.ReplaceAllString(input, " ")
+
+	// Split camel case and preserve acronyms using a custom approach
+	var words []string
+	currentWord := strings.Builder{}
+
+	for i, r := range cleaned {
+		// Append character to the current word
+		currentWord.WriteRune(r)
+
+		// Look for word boundaries
+		if i < len(cleaned)-1 {
+			next := rune(cleaned[i+1])
+
+			// Conditions for splitting:
+			if (isLower(r) && isUpper(next)) || // Transition from lower to upper case
+				(isUpper(r) && isUpper(next) && (i+2 < len(cleaned) && isLower(rune(cleaned[i+2])))) || // Acronyms
+				(isLetter(r) && !isLetter(next)) || // Transition from letter to non-letter
+				(isDigit(r) && !isDigit(next)) || // Transition from digit to non-digit
+				(!isDigit(r) && isDigit(next)) { // Transition from non-digit to digit
+
+				words = append(words, strings.TrimSpace(currentWord.String()))
+				currentWord.Reset()
+			}
+		}
+	}
+
+	// Append the last word if any
+	if currentWord.Len() > 0 {
+		words = append(words, strings.TrimSpace(currentWord.String()))
+	}
+
+	// Filter out empty strings caused by consecutive spaces
+	nonEmptyWords := []string{}
+	for _, word := range words {
+		if word != "" {
+			nonEmptyWords = append(nonEmptyWords, word)
+		}
+	}
+
+	return nonEmptyWords
+}
+
+func NameVariants(s string) (variants []string) {
+	parts := SplitWords(s)
+
+	// snake case: foo_bar_baz
+	var lowerParts []string
+	for _, p := range parts {
+		lowerParts = append(lowerParts, strings.ToLower(p))
+	}
+	variants = append(variants, strings.Join(lowerParts, "_"))
+
+	// slug/dash form: foo-bar-baz
+	variants = append(variants, strings.Join(lowerParts, "-"))
+
+	// pascal case: FooBarBaz
+	var titleParts []string
+	for _, p := range parts {
+		titleParts = append(titleParts, strings.Title(p))
+	}
+	variants = append(variants, strings.Join(titleParts, ""))
+
+	// pascal after lower: fooXYZBar => FooXyzBar
+	var titleAfterLowerParts []string
+	for _, p := range parts {
+		titleAfterLowerParts = append(titleAfterLowerParts, strings.Title(strings.ToLower(p)))
+	}
+	variants = append(variants, strings.Join(titleAfterLowerParts, ""))
+
+	// camel case: fooBarBaz
+	var camelParts []string
+	for i, p := range titleParts {
+		if i == 0 {
+			camelParts = append(camelParts, strings.ToLower(p))
+		} else {
+			camelParts = append(camelParts, p) // already title cased
+		}
+	}
+	variants = append(variants, strings.Join(camelParts, ""))
+
+	// camel after lower: fooXYZBar => fooXyzBar
+	var camelAfterLowerParts []string
+	for i, p := range parts {
+		if i == 0 {
+			camelAfterLowerParts = append(camelAfterLowerParts, strings.ToLower(p))
+		} else {
+			camelAfterLowerParts = append(camelAfterLowerParts, strings.Title(strings.ToLower(p)))
+		}
+	}
+	variants = append(variants, strings.Join(camelAfterLowerParts, ""))
+
+	// pluralize or singularize everything so far
+	size := len(variants)
+	for i := 0; i < size; i++ {
+		s := inflection.Singular(variants[i])
+		if variants[i] != s {
+			variants = append(variants, s)
+		}
+		p := inflection.Plural(variants[i])
+		if variants[i] != p {
+			variants = append(variants, p)
+		}
+	}
+
+	slices.Sort(variants)
+
+	return slices.Compact(variants)
+}
+
 func ToResourceName(path string) string {
 	segments := strings.Split(path, "/")
 	var nameParts []string
@@ -101,40 +214,6 @@ func ToResourceName(path string) string {
 	return toCamelCase(strings.Join(nameParts, "_"))
 }
 
-func getSchemaForPath(pathItem *v3.PathItem) *base.Schema {
-	if getOp := pathItem.Get; getOp != nil {
-		for statusCode, response := range getOp.Responses.Codes.FromNewest() {
-			if statusCode == "200" {
-				// Access the response schema for 200 status code
-				if content, ok := response.Content.Get("application/json"); ok {
-					s := content.Schema.Schema()
-					if len(s.Type) > 0 && s.Type[0] == "array" {
-						// log.Println("array")
-						return s.Items.A.Schema()
-					}
-					if len(s.Type) == 0 || (len(s.Type) > 0 && s.Type[0] == "object") {
-						if s.Properties != nil && s.Properties.Len() == 1 {
-							// log.Println("collection")
-							return s.Properties.First().Value().Schema()
-						}
-					}
-					// log.Println("schema")
-					return s
-				}
-			}
-		}
-	}
-	return nil
-}
-
-func isCollectionPath(path string) bool {
-	segments := strings.Split(path, "/")
-	lastSegment := segments[len(segments)-1]
-
-	// Check if the last segment is not a parameter (e.g., "{id}")
-	return !strings.HasPrefix(lastSegment, "{")
-}
-
 func convertYAMLToStringMap(i interface{}) interface{} {
 	switch x := i.(type) {
 	case map[interface{}]interface{}:
@@ -157,4 +236,20 @@ func convertYAMLToStringMap(i interface{}) interface{} {
 		}
 	}
 	return i
+}
+
+func isLower(r rune) bool {
+	return r >= 'a' && r <= 'z'
+}
+
+func isUpper(r rune) bool {
+	return r >= 'A' && r <= 'Z'
+}
+
+func isLetter(r rune) bool {
+	return isLower(r) || isUpper(r)
+}
+
+func isDigit(r rune) bool {
+	return r >= '0' && r <= '9'
 }

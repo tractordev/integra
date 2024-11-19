@@ -303,21 +303,16 @@ func (o *googleOperation) Parameters() (params []Schema) {
 }
 
 func (o *googleOperation) Response() Schema {
-	respRaw := o.schema.Get("response")
-	if respRaw.IsNil() {
+	resp := o.responseSchema()
+	if resp == nil {
 		return nil
 	}
-	s := &googleSchema{
-		name:   "(response)",
-		op:     o,
-		schema: respRaw,
-	}
-	if o.Output().Type() == s.Type() {
-		// unless output is an array and
-		// this isn't, we don't need resp
-		return nil
-	}
-	return s
+	// if o.Output().Name() == resp.Name() {
+	// 	// if output is the response,
+	// 	// we don't need response
+	// 	return nil
+	// }
+	return resp
 }
 
 func (o *googleOperation) Input() Schema {
@@ -334,39 +329,59 @@ func (o *googleOperation) Input() Schema {
 }
 
 func (o *googleOperation) Output() Schema {
-	outRaw := o.schema.Get("response")
-	if outRaw.IsNil() {
+	s, isListing := o.listingResponse()
+	if isListing {
+		return s
+	}
+	// TODO: detect other envelopes
+	resp := o.responseSchema()
+	if resp == nil {
 		return nil
 	}
-	s := &googleSchema{
-		name:   "(output)",
+	return resp
+}
+
+func (o *googleOperation) responseSchema() *googleSchema {
+	resp := o.schema.Get("response")
+	if resp.IsNil() {
+		return nil
+	}
+	return &googleSchema{
+		name:   "(response)",
 		op:     o,
-		schema: outRaw,
+		schema: resp,
 	}
-	if o.name == "list" {
-		// detect array by resource name, "items", then first array prop
-		if res := outRaw.Get(o.resource.name); !res.IsNil() {
-			s.schema = res
-			if s.Type() == "array" {
-				return s
-			}
-		}
-		if items := outRaw.Get("items"); !items.IsNil() {
-			s.schema = items
-			if s.Type() == "array" {
-				return s
-			}
-		}
-		for _, prop := range s.Properties() {
-			if prop.Type() == "array" {
-				s.schema = prop.(*googleSchema).schema
-				return s
-			}
-		}
-		// set schema back just in case
-		s.schema = outRaw
+}
+
+func (o *googleOperation) listingResponse() (*googleSchema, bool) {
+	resp := o.responseSchema()
+	if resp == nil {
+		return nil, false
 	}
-	return s
+	if resp.Type() == "array" {
+		// response is an array
+		return resp, true
+	}
+	for _, name := range NameVariants(o.resource.name) {
+		if s := resp.schema.Get("properties", name); !s.IsNil() && AsOrZero[string](s.Get("type")) == "array" {
+			// response has array under resource name or variant
+			return &googleSchema{
+				name:   name,
+				op:     o,
+				schema: s,
+			}, true
+		}
+	}
+	if s := resp.schema.Get("properties", "items"); !s.IsNil() && AsOrZero[string](s.Get("type")) == "array" {
+		// response has array under "items" key
+		return &googleSchema{
+			name:   "items",
+			op:     o,
+			schema: s,
+		}, true
+	}
+	// TODO: more strategies
+	return nil, false
 }
 
 type googleParameter struct {

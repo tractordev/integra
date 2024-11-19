@@ -26,13 +26,6 @@ func describeTabWriter() *tabwriter.Writer {
 	return tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 }
 
-func truncateText(s string) string {
-	if len(s) > 50 {
-		s = s[:50] + "..."
-	}
-	return s
-}
-
 func describeCmd() *cli.Command {
 	cmd := &cli.Command{
 		Usage: "describe <selector>",
@@ -189,7 +182,7 @@ func describeResourceOperations(r integra.Resource) {
 	w := describeTabWriter()
 	defer w.Flush()
 	for _, op := range r.Operations() {
-		fmt.Fprintf(w, "%s\t%s\n", op.Name(), truncateText(op.Description()))
+		fmt.Fprintf(w, "%s\t%s\n", op.Name(), shortText(op.Description()))
 	}
 	fmt.Fprintln(w)
 }
@@ -199,7 +192,7 @@ func describeResourceInfo(r integra.Resource) {
 	defer w.Flush()
 	fmt.Fprintf(w, "Title:\t%s\n", r.Title())
 	if r.Description() != "" {
-		fmt.Fprintf(w, "Description:\t%s\n", truncateText(r.Description()))
+		fmt.Fprintf(w, "Description:\t%s\n", shortText(r.Description()))
 	}
 	if len(r.Tags()) > 0 {
 		fmt.Fprintf(w, "Tags:\t%s\n", strings.Join(r.Tags(), ", "))
@@ -258,7 +251,7 @@ func describeOperationInfo(op integra.Operation) {
 		fmt.Fprintf(w, "ID:\t%s\n", op.ID())
 	}
 	if op.Description() != "" {
-		fmt.Fprintf(w, "Description:\t%s\n", truncateText(op.Description()))
+		fmt.Fprintf(w, "Description:\t%s\n", shortText(op.Description()))
 	}
 	fmt.Fprintf(w, "Endpoint:\t%s\n", op.URL())
 	fmt.Fprintf(w, "Method:\t%s\n", op.Method())
@@ -299,13 +292,16 @@ func describeOperation(op integra.Operation) {
 		describePropSummary(input.Properties(), "  ", true)
 	}
 
-	if resp := op.Response(); resp != nil {
+	resp := op.Response()
+	output := op.Output()
+
+	if resp != nil && resp.Name() != output.Name() {
 		fmt.Printf("=== OPERATION RESPONSE\n")
 		fmt.Printf("%s:\n", resp.Type())
 		describePropSummary(resp.Properties(), "  ", false)
 	}
 
-	if output := op.Output(); output != nil {
+	if output != nil {
 		fmt.Printf("=== OPERATION OUTPUT\n")
 		if output.Type() == "array" {
 			fmt.Printf("%s of %s:\n", output.Type(), output.Items().Type())
@@ -344,7 +340,7 @@ func describePropSummary(props []integra.Schema, indent string, showOptional boo
 		if showOptional && !prop.Required() {
 			optional = ", optional"
 		}
-		fmt.Fprintf(w, "%s%s\t%s%s\t%s\n", indent, prop.Name(), prop.Type(), optional, truncateText(prop.Description()))
+		fmt.Fprintf(w, "%s%s\t%s%s\t%s\n", indent, prop.Name(), prop.Type(), optional, shortText(prop.Description()))
 	}
 	fmt.Fprintln(w)
 }

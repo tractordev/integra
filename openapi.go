@@ -467,24 +467,6 @@ func (o *openapiOperation) Parameters() (params []Schema) {
 	return
 }
 
-func (o *openapiOperation) Response() Schema {
-	respRaw := o.schema.Get("responses", "200", "content", "application/json", "schema")
-	if respRaw.IsNil() {
-		return nil
-	}
-	s := &openapiSchema{
-		name:   "(response)",
-		op:     o,
-		schema: respRaw,
-	}
-	if o.Output().Type() == s.Type() {
-		// unless output is an array and
-		// this isn't, we don't need resp
-		return nil
-	}
-	return s
-}
-
 func (o *openapiOperation) Input() Schema {
 	reqRaw := o.schema.Get("requestBody", "content", "application/json", "schema")
 	if reqRaw.IsNil() {
@@ -498,40 +480,73 @@ func (o *openapiOperation) Input() Schema {
 	}
 }
 
-func (o *openapiOperation) Output() Schema {
-	outRaw := o.schema.Get("responses", "200", "content", "application/json", "schema")
-	if outRaw.IsNil() {
+func (o *openapiOperation) Response() Schema {
+	resp := o.responseSchema()
+	if resp == nil {
 		return nil
 	}
-	s := &openapiSchema{
-		name:   "(output)",
+	// if o.Output().Name() == resp.Name() {
+	// 	// if output is the response,
+	// 	// we don't need response
+	// 	return nil
+	// }
+	return resp
+}
+
+func (o *openapiOperation) responseSchema() *openapiSchema {
+	s := o.schema.Get("responses", "200", "content", "application/json", "schema")
+	if s.IsNil() {
+		return nil
+	}
+	return &openapiSchema{
+		name:   "(response)",
 		op:     o,
-		schema: outRaw,
+		schema: s,
 	}
-	if o.name == "list" {
-		// detect array by resource name, "items", then first array prop
-		if res := outRaw.Get(o.resource.name); !res.IsNil() {
-			s.schema = res
-			if s.Type() == "array" {
-				return s
-			}
-		}
-		if items := outRaw.Get("items"); !items.IsNil() {
-			s.schema = items
-			if s.Type() == "array" {
-				return s
-			}
-		}
-		for _, prop := range s.Properties() {
-			if prop.Type() == "array" {
-				s.schema = prop.(*openapiSchema).schema
-				return s
-			}
-		}
-		// set schema back just in case
-		s.schema = outRaw
+}
+
+func (o *openapiOperation) listingResponse() (*openapiSchema, bool) {
+	resp := o.responseSchema()
+	if resp == nil {
+		return nil, false
 	}
-	return s
+	if resp.Type() == "array" {
+		// response is an array
+		return resp, true
+	}
+	for _, name := range NameVariants(o.resource.name) {
+		if s := resp.schema.Get("properties", name); !s.IsNil() && AsOrZero[string](s.Get("type")) == "array" {
+			// response has array under resource name or variant
+			return &openapiSchema{
+				name:   name,
+				op:     o,
+				schema: s,
+			}, true
+		}
+	}
+	if s := resp.schema.Get("properties", "items"); !s.IsNil() && AsOrZero[string](s.Get("type")) == "array" {
+		// response has array under "items" key
+		return &openapiSchema{
+			name:   "items",
+			op:     o,
+			schema: s,
+		}, true
+	}
+	// TODO: more strategies
+	return nil, false
+}
+
+func (o *openapiOperation) Output() Schema {
+	s, isListing := o.listingResponse()
+	if isListing {
+		return s
+	}
+	// TODO: detect other envelopes
+	resp := o.responseSchema()
+	if resp == nil {
+		return nil
+	}
+	return resp
 }
 
 type openapiParameter struct {

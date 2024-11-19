@@ -24,6 +24,7 @@ func main() {
 	root.AddCommand(describeCmd())
 	root.AddCommand(generateCmd())
 	root.AddCommand(devCmd())
+	root.AddCommand(fetchCmd())
 
 	if err := cli.Execute(context.Background(), root, os.Args[1:]); err != nil {
 		log.Fatal(err)

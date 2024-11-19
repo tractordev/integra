@@ -50,44 +50,18 @@ func callCmd() *cli.Command {
 				log.Fatal(err)
 			}
 
-			required := requiredParams(op)
-			params := map[string]any{}
-
+			data := map[string]any{}
 			if len(args) > 1 {
 				parsed, err := clon.Parse(args[1:])
 				if err != nil {
 					log.Fatal(err)
 				}
-				params = parsed.(map[string]any)
+				data = parsed.(map[string]any)
 			}
 
-			for _, name := range required {
-				_, ok := params[name]
-				if !ok {
-					log.Fatal("missing all required parameters:", required)
-				}
-			}
-
-			// TODO: validation here?
-
-			// var body io.Reader
-			// if slices.Contains([]string{"create", "set", "update"}, op.Name()) {
-			// 	b, err := json.Marshal(params)
-			// 	if err != nil {
-			// 		log.Fatal(err)
-			// 	}
-			// 	body = bytes.NewBuffer(b)
-			// }
-
-			// todo: need to populate url since implementing new model
-			req, err := http.NewRequest(op.Method(), op.URL(), nil)
+			req, err := integra.MakeRequest(op, data)
 			if err != nil {
 				log.Fatal(err)
-			}
-
-			token := integra.ServiceToken(s.Name())
-			if token != "" {
-				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 			}
 
 			resp, err := http.DefaultClient.Do(req)

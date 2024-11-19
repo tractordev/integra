@@ -2,21 +2,23 @@ package main
 
 import (
 	"fmt"
+	"os/exec"
+	"runtime"
 	"strings"
 
 	"tractor.dev/integra"
 )
 
+func truncateText(s string) string {
+	if len(s) > 50 {
+		s = s[:50] + "..."
+	}
+	return s
+}
+
 func shortText(s string) string {
 	s = strings.ReplaceAll(s, "\n", " ")
-	if !strings.Contains(s, ".") {
-		return s
-	}
-	sentences := strings.Split(s, ".")
-	if len(sentences) == 2 && strings.TrimSpace(sentences[1]) == "" {
-		return sentences[0]
-	}
-	return fmt.Sprintf("%s [...]", sentences[0])
+	return truncateText(s)
 }
 
 func schemaFeatures(schema integra.Schema) (features []string) {
@@ -37,4 +39,14 @@ func schemaFeatures(schema integra.Schema) (features []string) {
 		features = append(features, "read-only")
 	}
 	return
+}
+
+func open(s string) error {
+	// https://github.com/skratchdot/open-golang/blob/master/open
+	switch runtime.GOOS {
+	case "darwin":
+		return exec.Command("open", s).Run()
+	default:
+		return fmt.Errorf("todo: %s", runtime.GOOS)
+	}
 }
