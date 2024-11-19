@@ -36,7 +36,7 @@ is the current data of `meta.yaml`:
 | dataScope | string | Either "mixed" or "account". "account" means all resources are user-data. Default: "mixed" |
 | accountData | list of regexp strings | Matched paths are marked as "account" data scope (user-data) |
 
-Once all this is set up, the service should be available to `describe`. Here is what you can 
+Once all this is set up, the service should be available to `integra describe`. Here is what you can 
 run to make sure everything looks right:
 
 #### Check service info

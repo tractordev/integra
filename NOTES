@@ -1,13 +1,15 @@
 TODO
-- multi paths
-
+- multi paths, improved path detection
+  ItemURLs
+  CollectionURLs
 - fix github paths
 - fix digitalocean paths
 
-- selecting into schemas, detailed props
-- update call, try call with google services
 
-- perform gets
+- sub resources
+- selecting into schemas, detailed props
+- accountData => subjectivePaths
+- dataScope => defaultPOV: subjective|objective|mixed
 
 
 ====
@@ -17,3 +19,25 @@ sharedData:
 accountData:
   - /user
   - /user/*
+
+
+=== RESOURCE OPERATIONS
+list~      List gists for this account
+update~    Update a gist for this account
+delete    Delete a gist
+list      List public gists
+update    Update a gist
+get       Get a gist 
+
+
+github.~gist.list
+github.gist.~list
+github.gist.list~
+
+=== RESOURCE INFO
+Title:             Gist
+Description:       Gist Simple
+Tags:              gists
+List URLs:          https://api.github.com/gists
+Item URLs:          https://api.github.com/gists/{gist_id} 
+                    https://api.github.com/gists/{gist_id}/{sha}

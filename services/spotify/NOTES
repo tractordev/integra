@@ -31,3 +31,8 @@ skip-users-playback-to-previous-track
 get-queue
 add-to-queue
 get-recently-played
+
+====
+
+RESOLVED: ~me not being fetched. has no list. need to consider singleton resources (only get, no params)
+==

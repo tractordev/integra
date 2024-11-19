@@ -122,3 +122,28 @@ DropletAction
 kubernetesClusterUpgrade
     list
     create
+
+=======
+
+floatingIP.get wants a "floating_ip" which is the "ip" of a list entry. not only
+a case of a non-ID key, but i guess a service specific "name" key. 
+
+floatingIP.list
+  0 floating_ips, [project_id] => map[floating_ip:] 
+
+--
+
+similarish, domain.list entries have a "name" but domain.get wants "domain_name"...
+seems specific to resource but where one might guess it to be "name" or "domain"
+this shows a probably common case of "domain_name" or "(resource)_name"
+
+domain.list
+  0 domains, [] => map[domain_name:] 
+
+--
+
+database.list
+  0 databases, [id private_network_uuid project_id] => map[database_cluster_uuid:id] 
+
+just pointing out that this was a correct guess. even though it wants a "uuid", the
+"id" field is a uuid. 

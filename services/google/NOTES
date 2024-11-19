@@ -40,3 +40,18 @@ this data seems to mark operations where this is the case
 
 "supportsMediaDownload": true,
 "useMediaDownloadService": true,
+
+===
+Google Keep API is for enterprise users only.
+https://stackoverflow.com/questions/68802724/how-to-add-google-keep-api-scope
+
+Unofficial mobile API has project:
+https://github.com/kiwiz/gkeepapi
+https://gkeepapi.readthedocs.io/en/latest/#authenticating
+
+
+===
+Google Calendar
+
+acl, event, calendar resources all depend on calendarlist.list for calendarId.
+they should be sub-resources. calendar has no list, but uses id from calendarlist.list
