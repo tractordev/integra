@@ -35,10 +35,18 @@ func (r *PointerResolver) Resolve(ref string, parent *Value) (interface{}, error
 		// Unescape JSON Pointer special sequences
 		part = strings.ReplaceAll(part, "~1", "/")
 		part = strings.ReplaceAll(part, "~0", "~")
+		part = strings.ReplaceAll(part, "%7B", "{")
+		part = strings.ReplaceAll(part, "%7D", "}")
 
 		// Try to parse as array index first
 		if idx, err := strconv.Atoi(part); err == nil {
-			result = result.Get(idx)
+			idxResult := result.Get(idx)
+			if !idxResult.IsNil() {
+				result = idxResult
+			} else {
+				// fallback to string lookup
+				result = result.Get(part)
+			}
 		} else {
 			result = result.Get(part)
 		}

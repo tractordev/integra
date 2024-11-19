@@ -3,9 +3,12 @@ package jsonaccess
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v2"
 )
 
 func TestBasicAccess(t *testing.T) {
@@ -414,4 +417,139 @@ func TestValue_Keys(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestComplexRefAndAllOfMerge1(t *testing.T) {
+	testYaml := `schema:
+  allOf:
+    - properties:
+        billing_history:
+          items:
+            properties:
+              amount:
+                description: Amount of the billing history entry.
+                example: "12.34"
+                type: string
+              date:
+                description: Time the billing history entry occurred.
+                example: 2018-06-01T08:44:38Z
+                format: date-time
+                type: string
+            type: object
+          type: array
+      type: object
+    - $ref: "#/definitions/ref1"
+    - properties:
+        meta:
+          $ref: "#/definitions/ref2"
+      required:
+        - meta
+      type: object
+definitions:
+  ref1:
+    properties:
+      links:
+        properties:
+          pages:
+            anyOf:
+              - allOf:
+                  - properties:
+                      last:
+                        description: URI of the last page of the results.
+                        example: https://api.digitalocean.com/v2/images?page=2
+                        type: string
+                    type: object
+                  - properties:
+                      next:
+                        description: URI of the next page of the results.
+                        example: https://api.digitalocean.com/v2/images?page=2
+                        type: string
+                    type: object
+              - allOf:
+                  - properties:
+                      first:
+                        description: URI of the first page of the results.
+                        example: https://api.digitalocean.com/v2/images?page=1
+                        type: string
+                    type: object
+                  - properties:
+                      prev:
+                        description: URI of the previous page of the results.
+                        example: https://api.digitalocean.com/v2/images?page=1
+                        type: string
+                    type: object
+              - {}
+            example:
+              pages:
+                first: https://api.digitalocean.com/v2/account/keys?page=1
+                prev: https://api.digitalocean.com/v2/account/keys?page=2
+        type: object
+    type: object
+  ref2:
+    description: Information about the response itself.
+    properties:
+      total:
+        description: Number of objects returned by the request.
+        example: 1
+        type: integer
+    type: object
+`
+	var raw map[any]any
+	if err := yaml.Unmarshal([]byte(testYaml), &raw); err != nil {
+		t.Fatal(err)
+	}
+	data := convertYAMLToStringMap(raw)
+
+	root := New(data)
+	resolver := NewPointerResolver(root)
+	root = root.WithResolver(resolver).WithAllOfMerge()
+
+	result := root.Get("schema", "properties").Keys()
+	expected := []string{"billing_history", "links", "meta"}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Expected %+v, but got %+v", expected, result)
+	}
+
+	result = root.Get("schema", "properties", "meta", "properties").Keys()
+	expected = []string{"total"}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Expected %+v, but got %+v", expected, result)
+	}
+
+	result = root.Get("schema", "properties", "meta", "properties").Keys()
+	expected = []string{"total"}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Expected %+v, but got %+v", expected, result)
+	}
+
+	result = root.Get("schema", "properties", "links").Keys()
+	expected = []string{"properties", "type"}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Expected %+v, but got %+v", expected, result)
+	}
+
+}
+
+func convertYAMLToStringMap(i interface{}) interface{} {
+	switch x := i.(type) {
+	case map[interface{}]interface{}:
+		m2 := map[string]interface{}{}
+		for k, v := range x {
+			switch kk := k.(type) {
+			case string:
+				m2[kk] = convertYAMLToStringMap(v)
+			case bool:
+				m2[fmt.Sprintf("%v", kk)] = convertYAMLToStringMap(v)
+			default:
+				log.Panicf("unable to convert %#v (%s) to a string key", k, reflect.TypeOf(k))
+			}
+
+		}
+		return m2
+	case []interface{}:
+		for i, v := range x {
+			x[i] = convertYAMLToStringMap(v)
+		}
+	}
+	return i
 }

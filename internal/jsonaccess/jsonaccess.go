@@ -107,14 +107,18 @@ func (v *Value) WithAllOfMerge() *Value {
 	}
 }
 
-// resolve attempts to resolve references and merge down allOf directives
+func (v *Value) copyWithData(data any) *Value {
+	return &Value{data: data, resolver: v.resolver, mergeAllOf: v.mergeAllOf}
+}
+
+// resolve attempts to merge down allOf directives and resolve references
 func (v *Value) resolve() (interface{}, error) {
-	resolved, err := v.resolveRef()
+	resolved, err := v.resolveAllOf()
 	if err != nil {
 		return nil, err
 	}
-	tmpValue := &Value{data: resolved, resolver: v.resolver}
-	return tmpValue.resolveAllOf()
+	tmpValue := v.copyWithData(resolved)
+	return tmpValue.resolveRef()
 }
 
 // hasRef checks if the current value is a reference object
@@ -155,7 +159,7 @@ func (v *Value) resolveRef() (interface{}, error) {
 
 // hasAllOf checks if the current value has an allOf directive
 func (v *Value) hasAllOf() ([]any, bool) {
-	if m, ok := v.data.(map[string]interface{}); ok {
+	if m, ok := v.data.(map[string]any); ok {
 		if allOf, ok := m["allOf"].([]any); ok {
 			return allOf, true
 		}
@@ -166,20 +170,25 @@ func (v *Value) hasAllOf() ([]any, bool) {
 // resolveAllOf attempts to merge down any objects under an allOf directive
 func (v *Value) resolveAllOf() (interface{}, error) {
 	if vals, hasAllOf := v.hasAllOf(); hasAllOf && v.mergeAllOf {
-		resolved := make(map[string]any)
+		var maps []map[string]any
 		for _, val := range vals {
-			if m, ok := val.(map[string]any); ok {
-				for k, v := range m {
-					resolved[k] = v
-				}
+			tmpValue := v.copyWithData(val.(map[string]any))
+			innerResolve, err := tmpValue.resolve()
+			if err != nil {
+				return nil, err
 			}
+			maps = append(maps, innerResolve.(map[string]any))
 		}
+		mergedMap := mergeMaps(maps...)
 		if m, ok := v.data.(map[string]any); ok {
 			for k, v := range m {
-				resolved[k] = v
+				if k == "allOf" {
+					continue
+				}
+				mergedMap[k] = v
 			}
 		}
-		return resolved, nil
+		return mergedMap, nil
 	}
 	return v.data, nil
 }
@@ -187,7 +196,16 @@ func (v *Value) resolveAllOf() (interface{}, error) {
 // Keys returns all keys of a map value in alphanumeric order.
 // Returns nil if the value is not a map.
 func (v *Value) Keys() (keys []string) {
-	m, ok := v.data.(map[string]any)
+	data := v.data
+
+	// Try to resolve any reference at the start
+	if resolved, err := v.resolve(); err == nil {
+		data = resolved
+	} else {
+		log.Println(err)
+	}
+
+	m, ok := data.(map[string]any)
 	if !ok {
 		return nil
 	}
@@ -230,23 +248,23 @@ func (v *Value) Get(keys ...interface{}) *Value {
 			if m, ok := current.(map[string]interface{}); ok {
 				current = m[k]
 			} else {
-				return &Value{data: nil, resolver: v.resolver}
+				return v.copyWithData(nil)
 			}
 		case int:
 			if arr, ok := current.([]interface{}); ok {
 				if k < 0 || k >= len(arr) {
-					return &Value{data: nil, resolver: v.resolver}
+					return v.copyWithData(nil)
 				}
 				current = arr[k]
 			} else {
-				return &Value{data: nil, resolver: v.resolver}
+				return v.copyWithData(nil)
 			}
 		default:
-			return &Value{data: nil, resolver: v.resolver}
+			return v.copyWithData(nil)
 		}
 
 		// Try to resolve reference at each step
-		newValue := &Value{data: current, resolver: v.resolver}
+		newValue := v.copyWithData(current)
 		if resolved, err := newValue.resolve(); err == nil {
 			current = resolved
 		} else {
@@ -254,7 +272,7 @@ func (v *Value) Get(keys ...interface{}) *Value {
 		}
 	}
 
-	return &Value{data: current, resolver: v.resolver}
+	return v.copyWithData(current)
 }
 
 // Data returns the raw underlying data
