@@ -123,7 +123,7 @@ selected service.
 
 ### Adding Services
 
-Integra supports [OpenAPI Descriptions](https://learn.openapis.org/specification/) or [Google Discovery Documents](https://developers.google.com/discovery/v1/reference/apis). If the API and provider are the same, for example `digitalocean`, you can make a directory under `services`. If a provider has multiple APIs, make a directory for the provider, like `google`, and a subdirectory for the API, `calendar`, which would make a service named `google-caledar`. In either case, the service directory needs a `meta.yaml` file and a directory for specific versions of the API description. This directory is named by the major version number of the API, so an API with version `1.0` would be `1`. Integra expects either an `openapi.yaml` file or a `googleapi.json` file in this directory.
+Integra supports [OpenAPI Descriptions](https://learn.openapis.org/specification/) or [Google Discovery Documents](https://developers.google.com/discovery/v1/reference/apis). If the API and provider are the same, for example `digitalocean`, you can make a directory under `services`. If a provider has multiple APIs, make a directory for the provider, like `google`, and a subdirectory for the API, `calendar`, which would make a service named `google-caledar`. In either case, the service directory needs a `meta.yaml` file and a directory for specific versions of the API description. This directory is named by the major version number of the API, so an API with version `1.0` would be `1`. Integra expects either an `openapi.yaml` file, `openapi.json` file, or a `googleapi.json` file in this directory.
 
 This would end up looking something like this:
 ```

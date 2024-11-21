@@ -78,6 +78,23 @@ func LoadService(name, version string) (Service, error) {
 
 	for _, info := range dir {
 		switch info.Name() {
+		case "openapi.json":
+			b, err = fs.ReadFile(services, path.Join("services", serviceDir, version, "openapi.json"))
+			if err != nil {
+				return nil, err
+			}
+
+			var data map[string]any
+			if err := json.Unmarshal(b, &data); err != nil {
+				return nil, err
+			}
+
+			root := jsonaccess.New(data)
+			resolver := jsonaccess.NewPointerResolver(root)
+			root = root.WithResolver(resolver).WithAllOfMerge()
+
+			return &openapiService{name: name, schema: root, meta: meta}, nil
+
 		case "openapi.yaml":
 			b, err = fs.ReadFile(services, path.Join("services", serviceDir, version, "openapi.yaml"))
 			if err != nil {

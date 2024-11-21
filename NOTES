@@ -1,4 +1,5 @@
 TODO
+- parameters at path level
 - multi paths, improved path detection
   ItemURLs
   CollectionURLs
@@ -41,3 +42,10 @@ Tags:              gists
 List URLs:          https://api.github.com/gists
 Item URLs:          https://api.github.com/gists/{gist_id} 
                     https://api.github.com/gists/{gist_id}/{sha}
+
+====
+
+swagger 2.0?
+  intstagram unofficial spec
+  no servers, uses basePath and host
+
