@@ -224,6 +224,8 @@ func convertYAMLToStringMap(i interface{}) interface{} {
 				m2[kk] = convertYAMLToStringMap(v)
 			case bool:
 				m2[fmt.Sprintf("%v", kk)] = convertYAMLToStringMap(v)
+			case int:
+				m2[fmt.Sprintf("%d", kk)] = convertYAMLToStringMap(v)
 			default:
 				log.Panicf("unable to convert %#v (%s) to a string key", k, reflect.TypeOf(k))
 			}
