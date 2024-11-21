@@ -147,3 +147,10 @@ database.list
 
 just pointing out that this was a correct guess. even though it wants a "uuid", the
 "id" field is a uuid. 
+
+--
+
+an exact match should be the answer!
+
+invoice.list
+  20 invoices, [invoice_uuid] => map[invoice_uuid:] 
