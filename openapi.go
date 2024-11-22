@@ -411,10 +411,11 @@ func (o *openapiOperation) AbsName() string {
 		"patch":  "update",
 		"delete": "delete",
 		"post":   "create",
-		"head":   "check",
+		"head":   "scan",
 	}
 	if o.path.isItemPath() {
 		mapping["get"] = "get"
+		mapping["head"] = "check"
 		mapping["post"] = "post" // TODO: something better
 	}
 	return cmp.Or(mapping[o.method], "??"+o.method)
