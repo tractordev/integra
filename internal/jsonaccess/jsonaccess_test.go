@@ -553,3 +553,32 @@ func convertYAMLToStringMap(i interface{}) interface{} {
 	}
 	return i
 }
+
+func TestRefToRef(t *testing.T) {
+	testYaml := `object:
+  schema:
+    $ref: "#/components/schemas/patchAccessTokenResponse"
+components:
+  schemas:
+    patchAccessTokenResponse:
+      $ref: "#/components/schemas/accessToken"
+    accessToken:
+      type: string
+`
+	var raw map[any]any
+	if err := yaml.Unmarshal([]byte(testYaml), &raw); err != nil {
+		t.Fatal(err)
+	}
+	data := convertYAMLToStringMap(raw)
+
+	root := New(data)
+	resolver := NewPointerResolver(root)
+	root = root.WithResolver(resolver)
+
+	result := AsOrZero[string](root.Get("object", "schema", "type"))
+	expected := "string"
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Expected %+v, but got %+v", expected, result)
+	}
+
+}

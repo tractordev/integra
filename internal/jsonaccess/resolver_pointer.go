@@ -13,7 +13,9 @@ type PointerResolver struct {
 
 // NewPointerResolver creates a new resolver that resolves references against a root document
 func NewPointerResolver(root *Value) *PointerResolver {
-	return &PointerResolver{root: root}
+	r := &PointerResolver{}
+	r.root = root.WithResolver(r)
+	return r
 }
 
 // Resolve implements the Resolver interface for JSON Pointer syntax

@@ -93,8 +93,9 @@ func New(data interface{}) *Value {
 // WithResolver returns a new Value with the given resolver
 func (v *Value) WithResolver(resolver Resolver) *Value {
 	return &Value{
-		data:     v.data,
-		resolver: resolver,
+		data:       v.data,
+		resolver:   resolver,
+		mergeAllOf: v.mergeAllOf,
 	}
 }
 

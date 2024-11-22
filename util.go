@@ -3,6 +3,7 @@ package integra
 import (
 	"fmt"
 	"log"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"slices"
@@ -185,6 +186,9 @@ func NameVariants(s string) (variants []string) {
 }
 
 func ToResourceName(path string) string {
+	ext := filepath.Ext(path)
+	path = strings.TrimSuffix(path, ext)
+	path = strings.ReplaceAll(path, ".", "")
 	segments := strings.Split(path, "/")
 	var nameParts []string
 
