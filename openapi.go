@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"path"
 	"regexp"
 	"slices"
 	"strings"
@@ -256,8 +257,60 @@ func (r *openapiResource) Service() Service {
 	return r.service
 }
 
+func (r *openapiResource) Subresources() (res []Resource) {
+	for _, rr := range r.service.Resources() {
+		if rr.Parent() == r {
+			res = append(res, rr)
+		}
+	}
+	return
+}
+
 func (r *openapiResource) Parent() Resource {
-	return r.parent
+	var shortestPath *openapiPath
+	if r.Orientation() == "relative" {
+		for _, p := range r.relativePaths() {
+			shortestPath = p
+			break
+		}
+	} else {
+		for _, p := range r.absolutePaths() {
+			shortestPath = p
+			break
+		}
+	}
+
+	findResourceByItemPath := func(pathname string) Resource {
+		parentURL := denamePathParams(r.expandToURL(pathname))
+		for _, rr := range r.service.Resources() {
+			if rr.Name() == r.Name() {
+				continue
+			}
+			for _, u := range rr.ItemURLs() {
+				if denamePathParams(u) == parentURL {
+					return rr
+				}
+			}
+		}
+		return nil
+	}
+
+	parentPathname := shortestPath.parentPathname()
+	parent := findResourceByItemPath(parentPathname)
+	if parent != nil {
+		return parent
+	}
+
+	// not found? try parent of parent path if item path
+	if shortestPath.isItemPath() {
+		parentPathname = path.Dir(parentPathname)
+	}
+	parent = findResourceByItemPath(parentPathname)
+	if parent != nil {
+		return parent
+	}
+
+	return nil
 }
 
 func (r *openapiResource) Name() string {

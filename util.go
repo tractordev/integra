@@ -72,6 +72,11 @@ func toCamelCase(s string) string {
 	return strings.Join(words, "")
 }
 
+func denamePathParams(path string) string {
+	re := regexp.MustCompile(`\{[^}]+\}`)
+	return re.ReplaceAllString(path, "{}")
+}
+
 // SplitWords splits a string into words based on separators and casing rules.
 func SplitWords(input string) []string {
 	// Replace non-alphanumeric separators with a single space

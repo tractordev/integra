@@ -119,6 +119,11 @@ func (r *googleResource) Parent() Resource {
 	return r.parent
 }
 
+func (r *googleResource) Subresources() []Resource {
+	// TODO
+	return nil
+}
+
 func (r *googleResource) Name() string {
 	if r.parent != nil {
 		return ToResourceName(strings.Join([]string{r.parent.Name(), r.name}, "_"))

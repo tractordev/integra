@@ -194,6 +194,9 @@ func describeResourceInfo(r integra.Resource) {
 	if r.Description() != "" {
 		fmt.Fprintf(w, "Description:\t%s\n", shortText(r.Description()))
 	}
+	if r.Parent() != nil {
+		fmt.Fprintf(w, "Parent:\t%s\n", r.Parent().Name())
+	}
 	if len(r.Tags()) > 0 {
 		fmt.Fprintf(w, "Tags:\t%s\n", strings.Join(r.Tags(), ", "))
 	}
@@ -238,6 +241,15 @@ func describeResource(r integra.Resource) {
 
 	// 	fmt.Println()
 	// }
+
+	subs := r.Subresources()
+	if len(subs) > 0 {
+		fmt.Printf("=== RESOURCE SUB-RESOURCES\n")
+		for _, sr := range subs {
+			fmt.Println(sr.Name())
+		}
+		fmt.Println()
+	}
 
 	fmt.Printf("=== RESOURCE OPERATIONS\n")
 	describeResourceOperations(r)

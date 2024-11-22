@@ -32,6 +32,7 @@ type Resource interface {
 
 	Schema() Schema
 
+	Subresources() []Resource
 	Operations() []Operation
 	Operation(name string) (Operation, error)
 
