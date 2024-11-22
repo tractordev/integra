@@ -25,6 +25,7 @@ var acronyms = map[string]bool{
 	"csv": true,
 	"cpu": true,
 	"id":  true,
+	"2fa": true,
 }
 
 var invariants = map[string]bool{
