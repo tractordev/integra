@@ -3,6 +3,7 @@ package integra
 import (
 	"cmp"
 	"fmt"
+	"log"
 	"net/url"
 	"regexp"
 	"slices"
@@ -373,6 +374,14 @@ func (r *openapiResource) Operations() (ops []Operation) {
 		for _, o := range p.operations() {
 			ops = append(ops, o)
 		}
+	}
+	names := make(map[string]bool)
+	for _, op := range ops {
+		_, exists := names[op.Name()]
+		if exists {
+			log.Printf("!! multiple operations named '%s' on %s\n", op.Name(), r.name)
+		}
+		names[op.Name()] = true
 	}
 	return
 }
