@@ -106,7 +106,7 @@ func describeServiceInfo(s integra.Service) {
 	fmt.Fprintf(w, "Title:\t%s\n", s.Title())
 	fmt.Fprintf(w, "Provider:\t%s\n", s.Provider())
 	fmt.Fprintf(w, "Version:\t%s\n", s.Version())
-	fmt.Fprintf(w, "Data Scope:\t%s\n", s.DataScope())
+	fmt.Fprintf(w, "Orientation:\t%s\n", s.Orientation())
 	fmt.Fprintf(w, "Categories:\t%s\n", strings.Join(s.Categories(), ", "))
 	fmt.Fprintf(w, "Security:\t%s\n", strings.Join(s.Security(), ", "))
 	fmt.Fprintf(w, "Base URL:\t%s\n", s.BaseURL())
@@ -117,7 +117,7 @@ func describeServiceResources(s integra.Service) {
 	res := s.Resources()
 	if accountData {
 		res = slices.DeleteFunc(res, func(r integra.Resource) bool {
-			return r.DataScope() != "account"
+			return r.Orientation() != "relative"
 		})
 	}
 	tagGroups := make(map[string][]integra.Resource)
@@ -197,11 +197,12 @@ func describeResourceInfo(r integra.Resource) {
 	if len(r.Tags()) > 0 {
 		fmt.Fprintf(w, "Tags:\t%s\n", strings.Join(r.Tags(), ", "))
 	}
-	if r.CollectionURL() != "" {
-		fmt.Fprintf(w, "Collection URL:\t%s\n", r.CollectionURL())
+	fmt.Fprintf(w, "Orientation:\t%s\n", r.Orientation())
+	if len(r.CollectionURLs()) > 0 {
+		fmt.Fprintf(w, "Collection URLs:\t%s\n", strings.Join(r.CollectionURLs(), ", "))
 	}
-	if r.ItemURL() != "" {
-		fmt.Fprintf(w, "Item URL:\t%s\n", r.ItemURL())
+	if len(r.ItemURLs()) > 0 {
+		fmt.Fprintf(w, "Item URLs:\t%s\n", strings.Join(r.ItemURLs(), ", "))
 	}
 	fmt.Fprintln(w)
 }

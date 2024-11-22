@@ -1,3 +1,8 @@
+TODO
+* fix repoIssueEvent, repoPullComment, repoIssueComment, repoActionArtifact, gist (see below)
+* userFollowing, userStarred
+
+
 github: user.list => user.get (no params)
 
 listing params 
@@ -18,7 +23,6 @@ concept of $self: /user paths vs others?
 
 ===
 
------
 
 !! more than 2 paths for 'userGPGKey':
 2024/11/15 14:07:37 openapi.go:135:    /user/gpg_keys get,post
@@ -34,7 +38,16 @@ _gpgKey
 
 userGPGKey
     get(username)
-    
+
+## RESOLVED:
+
+list~      List GPG keys for the authenticated user
+create~    Create a GPG key for the authenticated user
+delete~    Delete a GPG key for the authenticated user
+get~       Get a GPG key for the authenticated user
+list       List GPG keys for a user
+
+===
 
 !! more than 2 paths for 'user':
 2024/11/15 14:07:37 openapi.go:135:    /users/{username} get
@@ -49,6 +62,18 @@ _user
     get
     patch
 
+## RESOLVED: 
+
+Collection URLs:    https://api.github.com/users
+Item URLs:          https://api.github.com/user, https://api.github.com/users/{username}
+
+get~       Get the authenticated user
+update~    Update the authenticated user
+list       List users
+get        Get a user
+
+====
+
 !! more than 2 paths for 'userSSHSigningKey':
 2024/11/15 14:07:37 openapi.go:135:    /user/ssh_signing_keys
 2024/11/15 14:07:37 openapi.go:135:    /user/ssh_signing_keys/{ssh_signing_key_id}
@@ -62,7 +87,18 @@ userSSHSigningKey
 2024/11/15 14:07:37 openapi.go:135:    /user/keys/{key_id}
 2024/11/15 14:07:37 openapi.go:135:    /users/{username}/keys
 
----
+## RESOLVED:
+
+Collection URLs:    https://api.github.com/user/keys, https://api.github.com/users/{username}/keys
+Item URLs:          https://api.github.com/user/keys/{key_id}
+
+list~      List public SSH keys for the authenticated user
+create~    Create a public SSH key for the authenticated user
+delete~    Delete a public SSH key for the authenticated user
+get~       Get a public SSH key for the authenticated user
+list       List public keys for a user
+
+======
 
 !! more than 2 paths for 'repoIssueEvent':
 2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/issues/events
@@ -95,7 +131,7 @@ repoIssueComment
     update
     create
 
------
+=====
 
 !! more than 2 paths for 'repoActionArtifact':
 2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/actions/artifacts/{artifact_id} delete,get
@@ -122,7 +158,7 @@ _gist
     create
     getWithSHA
 
-----
+====
 
 two item URLS
 
@@ -131,8 +167,17 @@ two item URLS
 2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/git/refs post
 2024/11/15 14:07:37 openapi.go:135:    /repos/{owner}/{repo}/git/refs/{ref} delete,patch
 
+## RESOLVED!
 
----
+Collection URLs:    https://api.github.com/repos/{owner}/{repo}/git/refs
+Item URLs:          https://api.github.com/repos/{owner}/{repo}/git/ref/{ref}, https://api.github.com/repos/{owner}/{repo}/git/refs/{ref}
+
+get       Get a reference
+create    Create a reference
+delete    Delete a reference
+update    Update a reference
+
+====
 
 EXAMPLE of itemURL without path param
 
@@ -145,10 +190,9 @@ EXAMPLE of itemURL without path param
 2024/11/15 14:07:37 openapi.go:181:    /orgs/{org}/installation get
 2024/11/15 14:07:37 openapi.go:181:    /orgs/{org}/installations get
 
+## RESOLVED!
 
----
-
-should be fixed with dataScope
+====
 
 
 !! undetectable paths for 'userOrg':
@@ -175,14 +219,6 @@ should be fixed with dataScope
 2024/11/15 14:07:37 openapi.go:181:    /user/subscriptions
 2024/11/15 14:07:37 openapi.go:181:    /users/{username}/subscriptions
 
-!! more than 2 paths for 'userFollowing':
-2024/11/15 14:07:37 openapi.go:135:    /user/following
-2024/11/15 14:07:37 openapi.go:135:    /user/following/{username}
-
-2024/11/15 14:07:37 openapi.go:135:    /users/{username}/following/{target_user}
-2024/11/15 14:07:37 openapi.go:135:    /users/{username}/following
-
-
 !! undetectable paths for 'userPackageRestore':
 2024/11/15 14:07:37 openapi.go:181:    /users/{username}/packages/{package_type}/{package_name}/restore
 2024/11/15 14:07:37 openapi.go:181:    /user/packages/{package_type}/{package_name}/restore
@@ -202,6 +238,17 @@ should be fixed with dataScope
 2024/11/15 14:07:37 openapi.go:135:    /user/packages
 2024/11/15 14:07:37 openapi.go:135:    /user/packages/{package_type}/{package_name}
 2024/11/15 14:07:37 openapi.go:135:    /users/{username}/packages
+
+## RESOLVED
+
+===
+
+!! more than 2 paths for 'userFollowing':
+2024/11/15 14:07:37 openapi.go:135:    /user/following
+2024/11/15 14:07:37 openapi.go:135:    /user/following/{username}
+2024/11/15 14:07:37 openapi.go:135:    /users/{username}/following/{target_user}
+2024/11/15 14:07:37 openapi.go:135:    /users/{username}/following
+
 
 
 !! more than 2 paths for 'userStarred':

@@ -1,4 +1,6 @@
-get: wraps in object with key name of resource (floating_ip, image, etc)
+TODO:
+* unwrap gets in object with key name of resource (floating_ip, image, etc)
+* ambiguous creates for dropletAction and volumeAction
 
 listings:
 
@@ -84,7 +86,14 @@ registryGarbageCollection
     create
     setWithGarbageCollectionUUID
 
-------
+## RESOLVED, good enough for now?
+
+get     Get Active Garbage Collection
+post    Start Garbage Collection
+set     Update Garbage Collection
+list    List Garbage Collections
+
+====
 
 2024/11/15 17:59:33 openapi.go:179: !! undetectable paths for 'appMetricBandwidthDaily':
 2024/11/15 17:59:33 openapi.go:181:    /v2/apps/metrics/bandwidth_daily  post (report)
@@ -95,8 +104,13 @@ appMetricBandwidthDaily
     create
     get
 
+## RESOLVED but using post for now:
 
-----
+post    Retrieve Multiple Apps' Daily Bandwidth Metrics
+get     Retrieve App Daily Bandwidth Metrics
+
+
+====
 2024/11/15 17:59:33 openapi.go:133: !! more than 2 paths for 'volumeAction':
 2024/11/15 17:59:33 openapi.go:135:    /v2/volumes/actions
 2024/11/15 17:59:33 openapi.go:135:    /v2/volumes/{volume_id}/actions
@@ -113,8 +127,20 @@ DropletAction
     get
     createBulk??
 
-----
+## update:
+better, but now there are ambiguous creates for dropletAction and volumeAction:
 
+Collection URLs:    https://api.digitalocean.com/v2/volumes/actions, https://api.digitalocean.com/v2/volumes/{volume_id}/actions
+Item URLs:          https://api.digitalocean.com/v2/volumes/{volume_id}/actions/{action_id}
+
+=== RESOURCE OPERATIONS
+create    Initiate A Block Storage Action By Volume Name
+list      List All Actions for a Volume
+create    Initiate A Block Storage Action By Volume Id
+get       Retrieve an Existing Volume Action
+
+
+=====
 2024/11/15 17:59:33 openapi.go:179: !! undetectable paths for 'kuberneteClusterUpgrade':
 2024/11/15 17:59:33 openapi.go:181:    /v2/kubernetes/clusters/{cluster_id}/upgrade post
 2024/11/15 17:59:33 openapi.go:181:    /v2/kubernetes/clusters/{cluster_id}/upgrades get
@@ -122,6 +148,8 @@ DropletAction
 kubernetesClusterUpgrade
     list
     create
+
+## RESOLVED, but post instead of create for now
 
 =======
 

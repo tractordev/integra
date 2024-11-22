@@ -10,7 +10,7 @@ type Service interface {
 	Categories() []string
 	BaseURL() string
 	DocsURL() string
-	DataScope() string
+	Orientation() string
 	Security() []string
 
 	Resources() []Resource
@@ -25,9 +25,9 @@ type Resource interface {
 	Name() string
 	Title() string
 	Description() string
-	DataScope() string
-	CollectionURL() string
-	ItemURL() string
+	Orientation() string
+	CollectionURLs() []string
+	ItemURLs() []string
 	Tags() []string
 
 	Schema() Schema
@@ -41,11 +41,13 @@ type Resource interface {
 type Operation interface {
 	Resource() Resource
 	Name() string
+	AbsName() string
 	ID() string
 	Description() string
 	URL() string
 	Method() string
 	Tags() []string
+	Orientation() string
 	DocsURL() string
 	Security() []string
 	Scopes() []string
