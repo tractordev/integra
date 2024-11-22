@@ -29,8 +29,8 @@ func (s *googleService) Name() string {
 	return s.name
 }
 
-func (s *googleService) DataScope() string {
-	return cmp.Or(AsOrZero[string](s.meta.Get("dataScope")), "mixed")
+func (s *googleService) Orientation() string {
+	return cmp.Or(AsOrZero[string](s.meta.Get("contentOrientation")), "mixed")
 }
 
 func (s *googleService) Title() string {
@@ -130,9 +130,9 @@ func (r *googleResource) Title() string {
 	return strings.Title(r.name)
 }
 
-func (r *googleResource) DataScope() string {
-	if r.service.DataScope() == "account" {
-		return "account"
+func (r *googleResource) Orientation() string {
+	if r.service.Orientation() == "relative" {
+		return "relative"
 	}
 	return ""
 }
@@ -146,43 +146,45 @@ func (r *googleResource) Description() string {
 
 }
 
-func (r *googleResource) CollectionURL() string {
+func (r *googleResource) CollectionURLs() []string {
+	// todo: support multiple urls?
 	method := r.schema.Get("methods", "create")
 	if method.IsNil() {
 		method = r.schema.Get("methods", "list")
 	}
 	if method.IsNil() {
-		return ""
+		return nil
 	}
 	path := AsOrZero[string](method.Get("flatPath"))
 	if path == "" {
 		path = AsOrZero[string](method.Get("path"))
 	}
 	if path == "" {
-		return ""
+		return nil
 	}
 	u, _ := url.JoinPath(r.service.BaseURL(), path)
 	u = strings.ReplaceAll(u, "%7B", "{")
 	u = strings.ReplaceAll(u, "%7D", "}")
-	return u
+	return []string{u}
 }
 
-func (r *googleResource) ItemURL() string {
+func (r *googleResource) ItemURLs() []string {
+	// todo: support multiple urls?
 	method := r.schema.Get("methods", "get")
 	if method.IsNil() {
-		return ""
+		return nil
 	}
 	path := AsOrZero[string](method.Get("flatPath"))
 	if path == "" {
 		path = AsOrZero[string](method.Get("path"))
 	}
 	if path == "" {
-		return ""
+		return nil
 	}
 	u, _ := url.JoinPath(r.service.BaseURL(), path)
 	u = strings.ReplaceAll(u, "%7B", "{")
 	u = strings.ReplaceAll(u, "%7D", "}")
-	return u
+	return []string{u}
 }
 
 func (r *googleResource) Tags() []string {
@@ -231,6 +233,10 @@ func (o *googleOperation) Name() string {
 	return o.name
 }
 
+func (o *googleOperation) AbsName() string {
+	return o.name
+}
+
 func (o *googleOperation) ID() string {
 	return AsOrZero[string](o.schema.Get("id"))
 }
@@ -259,6 +265,10 @@ func (o *googleOperation) Method() string {
 
 func (o *googleOperation) Tags() []string {
 	return nil
+}
+
+func (o *googleOperation) Orientation() string {
+	return ""
 }
 
 func (o *googleOperation) DocsURL() string {

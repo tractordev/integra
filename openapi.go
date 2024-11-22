@@ -3,7 +3,6 @@ package integra
 import (
 	"cmp"
 	"fmt"
-	"log"
 	"net/url"
 	"regexp"
 	"slices"
@@ -35,8 +34,8 @@ func (s *openapiService) Name() string {
 	return s.name
 }
 
-func (s *openapiService) DataScope() string {
-	return cmp.Or(AsOrZero[string](s.meta.Get("dataScope")), "mixed")
+func (s *openapiService) Orientation() string {
+	return cmp.Or(AsOrZero[string](s.meta.Get("contentOrientation")), "mixed")
 }
 
 func (s *openapiService) Title() string {
@@ -44,7 +43,11 @@ func (s *openapiService) Title() string {
 }
 
 func (s *openapiService) Provider() string {
-	return AsOrZero[string](s.schema.Get("info", "x-providerName"))
+	u, _ := url.Parse(s.BaseURL())
+	return cmp.Or(
+		AsOrZero[string](s.schema.Get("info", "x-providerName")),
+		u.Hostname(),
+	)
 }
 
 func (s *openapiService) Version() string {
@@ -92,6 +95,15 @@ func (s *openapiService) securityScheme(name string) string {
 	return tt
 }
 
+func (s *openapiService) Resource(name string) (Resource, error) {
+	for _, r := range s.Resources() {
+		if r.Name() == name {
+			return r, nil
+		}
+	}
+	return nil, fmt.Errorf("resource '%s' not found", name)
+}
+
 func (s *openapiService) Resources() []Resource {
 	var out []Resource
 	if len(s.cachedRes) > 0 {
@@ -106,48 +118,43 @@ func (s *openapiService) Resources() []Resource {
 		return nil
 	}
 
-	accountPatterns := AsOrZero[[]string](s.meta.Get("accountData"))
-	shouldPrefix := s.DataScope() == "mixed"
+	relativePatterns := AsOrZero[[]string](s.meta.Get("relativeContentPaths"))
 
 	var res []*openapiResource
 	resLookup := make(map[string]*openapiResource)
-	for _, p := range paths.Keys() {
-		name := ToResourceName(p)
 
-		for _, pattern := range accountPatterns {
-			if ok, _ := regexp.MatchString(pattern, p); ok {
-				if strings.Contains(pattern, ".*") {
-					name = ToResourceName(strings.Replace(p, strings.Trim(pattern, "^.*"), "", 1))
-				}
-				if shouldPrefix {
-					name = fmt.Sprintf("~%s", name)
-				}
-				break
-			}
-		}
-		if name == "" {
+	for _, rawPath := range paths.Keys() {
+		resName := ToResourceName(rawPath)
+		if resName == "" {
 			continue
 		}
-		if _, exists := resLookup[name]; !exists {
-			var dataScope string
-			if s.DataScope() == "account" || strings.HasPrefix(name, "~") {
-				dataScope = "account"
-			}
+
+		if _, exists := resLookup[resName]; !exists {
 			r := &openapiResource{
-				name:      name,
-				dataScope: dataScope,
-				service:   s,
-				paths:     make(map[string]*Value),
+				name:    resName,
+				service: s,
 			}
 			res = append(res, r)
-			resLookup[name] = r
+			resLookup[resName] = r
 		}
-		r := resLookup[name]
-		r.paths[p] = paths.Get(p)
-	}
+		r := resLookup[resName]
 
-	for _, r := range resLookup {
-		determinePathTypes(r)
+		orientation := s.Orientation()
+		if orientation == "mixed" {
+			orientation = "absolute"
+		}
+		for _, pattern := range relativePatterns {
+			if ok, _ := regexp.MatchString(pattern, rawPath); ok {
+				orientation = "relative"
+			}
+		}
+		p := &openapiPath{
+			parts:       strings.Split(rawPath, "/"),
+			schema:      paths.Get(rawPath),
+			orientation: orientation,
+			resource:    r,
+		}
+		r.paths = append(r.paths, p)
 	}
 
 	s.cachedRes = res
@@ -157,79 +164,87 @@ func (s *openapiService) Resources() []Resource {
 	return out
 }
 
-func determinePathTypes(r *openapiResource) {
-	// if more than 2, what's going on??
-	if len(r.paths) > 2 {
-		log.Printf("!! more than 2 paths for '%s':\n", r.name)
-		for p := range r.paths {
-			log.Println("  ", p)
-		}
-		// keep going?
-	}
-	// if just one path, probably item path
-	// if len(r.paths) == 1 {
-	// 	for p := range r.paths {
-	// 		r.itemPath = p
-	// 	}
-	// 	return
-	// }
+type openapiPath struct {
+	parts       []string
+	schema      *Value
+	orientation string
 
-	// if last segment is parameter, probably item path
-	for p := range r.paths {
-		segments := strings.Split(p, "/")
-		lastSegment := segments[len(segments)-1]
-		if strings.HasPrefix(lastSegment, "{") {
-			r.itemPath = p
-		}
-	}
-	if r.itemPath != "" {
-		for p := range r.paths {
-			if p != r.itemPath && strings.HasPrefix(r.itemPath, p) {
-				r.collectionPath = p
-			}
-		}
-		return
-	}
-
-	// now if just one path, use inflection of last segment
-	if len(r.paths) == 1 {
-		for p := range r.paths {
-			segments := strings.Split(p, "/")
-			lastSegment := segments[len(segments)-1]
-			// TODO: handle acronyms
-			if lastSegment == inflection.Singular(lastSegment) {
-				r.itemPath = p
-			} else {
-				r.collectionPath = p
-			}
-		}
-		return
-	}
-
-	log.Printf("!! undetectable paths for '%s':\n", r.name)
-	for p := range r.paths {
-		log.Println("  ", p)
-	}
-
+	resource *openapiResource
 }
 
-func (s *openapiService) Resource(name string) (Resource, error) {
-	for _, r := range s.Resources() {
-		if r.Name() == name {
-			return r, nil
-		}
+func (p *openapiPath) name() string {
+	return strings.Join(p.parts, "/")
+}
+
+func (p *openapiPath) parentPathname() string {
+	return strings.Join(p.parts[:len(p.parts)-1], "/")
+}
+
+func (p *openapiPath) hasParamBase() bool {
+	lastSegment := p.parts[len(p.parts)-1]
+	return strings.HasPrefix(lastSegment, "{")
+}
+
+func (p *openapiPath) hasDoubleParamBase() bool {
+	if !p.hasParamBase() {
+		return false
 	}
-	return nil, fmt.Errorf("resource '%s' not found", name)
+	if len(p.parts) < 2 {
+		return false
+	}
+	lastSegment := p.parts[len(p.parts)-2]
+	return strings.HasPrefix(lastSegment, "{")
+}
+
+func (p *openapiPath) isItemPath() bool {
+	return !p.isPluralBase()
+}
+
+func (p *openapiPath) isPluralBase() bool {
+	if p.hasParamBase() {
+		return false
+	}
+	lastSegment := p.parts[len(p.parts)-1]
+	// TODO: handle acronyms
+	return lastSegment == inflection.Plural(lastSegment)
+}
+
+func (p *openapiPath) sharedParams() (params []Schema) {
+	paramsRaw := p.schema.Get("parameters")
+	if paramsRaw.IsNil() {
+		return nil
+	}
+	for _, paramSchema := range paramsRaw.Items() {
+		param := &openapiParameter{
+			schema: paramSchema,
+		}
+		if param.ReadOnly() {
+			continue
+		}
+		params = append(params, param)
+	}
+	return
+}
+
+func (p *openapiPath) operations() (ops []*openapiOperation) {
+	for _, method := range p.schema.Keys() {
+		if strings.HasPrefix(method, "x-") || method == "parameters" {
+			continue
+		}
+		ops = append(ops, &openapiOperation{
+			path:   p,
+			method: method,
+			schema: p.schema.Get(method),
+		})
+	}
+	return
 }
 
 type openapiResource struct {
-	name           string
-	parent         *openapiResource
-	service        *openapiService
-	dataScope      string
-	paths          map[string]*Value
-	itemPath       string
-	collectionPath string
+	name    string
+	parent  *openapiResource
+	service *openapiService
+	paths   []*openapiPath
 }
 
 func (r *openapiResource) Debug() string {
@@ -255,16 +270,45 @@ func (r *openapiResource) Title() string {
 	return strings.Title(strings.Trim(r.name, "~"))
 }
 
-func (r *openapiResource) DataScope() string {
-	return r.dataScope
+func (r *openapiResource) relativePaths() (paths []*openapiPath) {
+	for _, p := range r.paths {
+		if p.orientation == "relative" {
+			paths = append(paths, p)
+		}
+	}
+	return
+}
+
+func (r *openapiResource) absolutePaths() (paths []*openapiPath) {
+	for _, p := range r.paths {
+		if p.orientation == "absolute" {
+			paths = append(paths, p)
+		}
+	}
+	return
+}
+
+func (r *openapiResource) Orientation() string {
+	hasRelative := len(r.relativePaths()) > 0
+	hasAbsolute := len(r.absolutePaths()) > 0
+	if hasRelative && !hasAbsolute {
+		return "relative"
+	}
+	if hasAbsolute && !hasRelative {
+		return "absolute"
+	}
+	return "mixed"
+}
+
+func (r *openapiResource) primaryPath() *openapiPath {
+	// todo: improve way to find primary item
+	lastPath := r.paths[len(r.paths)-1]
+	return lastPath
 }
 
 func (r *openapiResource) Description() string {
-	path, ok := r.paths[r.itemPath]
-	if !ok {
-		return ""
-	}
-	schema := path.Get("get", "responses", "200", "content", "application/json", "schema")
+	path := r.primaryPath()
+	schema := path.schema.Get("get", "responses", "200", "content", "application/json", "schema")
 	if schema.IsNil() {
 		return ""
 	}
@@ -272,24 +316,29 @@ func (r *openapiResource) Description() string {
 
 }
 
-func (r *openapiResource) CollectionURL() string {
-	if r.collectionPath == "" {
-		return ""
-	}
-	u, _ := url.JoinPath(r.service.BaseURL(), r.collectionPath)
+func (r *openapiResource) expandToURL(path string) string {
+	u, _ := url.JoinPath(r.service.BaseURL(), path)
 	u = strings.ReplaceAll(u, "%7B", "{")
 	u = strings.ReplaceAll(u, "%7D", "}")
 	return u
 }
 
-func (r *openapiResource) ItemURL() string {
-	if r.itemPath == "" {
-		return ""
+func (r *openapiResource) CollectionURLs() (urls []string) {
+	for _, p := range r.paths {
+		if !p.isItemPath() {
+			urls = append(urls, p.resource.expandToURL(p.name()))
+		}
 	}
-	u, _ := url.JoinPath(r.service.BaseURL(), r.itemPath)
-	u = strings.ReplaceAll(u, "%7B", "{")
-	u = strings.ReplaceAll(u, "%7D", "}")
-	return u
+	return
+}
+
+func (r *openapiResource) ItemURLs() (urls []string) {
+	for _, p := range r.paths {
+		if p.isItemPath() {
+			urls = append(urls, p.resource.expandToURL(p.name()))
+		}
+	}
+	return
 }
 
 func (r *openapiResource) Tags() (tags []string) {
@@ -310,56 +359,6 @@ func (r *openapiResource) Schema() Schema {
 	return nil
 }
 
-func (r *openapiResource) Operations() (ops []Operation) {
-	addOperation := func(item bool, method, path string, schema *Value) {
-		mapping := map[string]string{
-			"get":    "list",
-			"put":    "set",
-			"patch":  "update",
-			"delete": "delete",
-			"post":   "create",
-		}
-		if item {
-			mapping["get"] = "get"
-			mapping["post"] = "post" // ehhh
-		}
-		opName := mapping[method]
-		if opName == "" {
-			log.Printf("!! unknown operation for '%s %s'\n", method, path)
-			return
-		}
-		ops = append(ops, &openapiOperation{
-			name:     opName,
-			path:     path,
-			method:   method,
-			resource: r,
-			schema:   schema,
-		})
-	}
-	for p, path := range r.paths {
-		if p == r.collectionPath {
-			for _, method := range path.Keys() {
-				if strings.HasPrefix(method, "x-") {
-					continue
-				}
-				addOperation(false, method, p, path.Get(method))
-			}
-			continue
-		}
-		if p == r.itemPath {
-			for _, method := range path.Keys() {
-				if strings.HasPrefix(method, "x-") {
-					continue
-				}
-				addOperation(true, method, p, path.Get(method))
-			}
-			continue
-		}
-		log.Printf("!! no operations for %d methods on '%s'\n", len(path.Keys()), p)
-	}
-	return
-}
-
 func (r *openapiResource) Operation(name string) (Operation, error) {
 	for _, o := range r.Operations() {
 		if o.Name() == name {
@@ -369,24 +368,55 @@ func (r *openapiResource) Operation(name string) (Operation, error) {
 	return nil, fmt.Errorf("operation '%s' not found", name)
 }
 
+func (r *openapiResource) Operations() (ops []Operation) {
+	for _, p := range r.paths {
+		for _, o := range p.operations() {
+			ops = append(ops, o)
+		}
+	}
+	return
+}
+
 type openapiOperation struct {
-	name     string
-	path     string
-	method   string
-	resource *openapiResource
-	schema   *Value
+	path   *openapiPath
+	method string
+	schema *Value
 }
 
 func (o *openapiOperation) Resource() Resource {
-	return o.resource
+	return o.path.resource
 }
 
 func (o *openapiOperation) Name() string {
-	return o.name
+	name := o.AbsName()
+	if o.path.resource.service.Orientation() == "mixed" && o.path.orientation == "relative" {
+		return name + "~"
+	}
+	return name
+}
+
+func (o *openapiOperation) AbsName() string {
+	mapping := map[string]string{
+		"get":    "list",
+		"put":    "set",
+		"patch":  "update",
+		"delete": "delete",
+		"post":   "create",
+	}
+	if o.path.isItemPath() {
+		mapping["get"] = "get"
+		mapping["post"] = "post" // ehhh
+	}
+	return cmp.Or(mapping[o.method], "??"+o.method)
 }
 
 func (o *openapiOperation) ID() string {
 	return AsOrZero[string](o.schema.Get("operationId"))
+}
+
+func (o *openapiOperation) Orientation() string {
+	// todo: per operation orientation?
+	return o.path.orientation
 }
 
 func (o *openapiOperation) Description() string {
@@ -398,13 +428,7 @@ func (o *openapiOperation) Description() string {
 }
 
 func (o *openapiOperation) URL() string {
-	if o.path == "" {
-		return ""
-	}
-	u, _ := url.JoinPath(o.resource.service.BaseURL(), o.path)
-	u = strings.ReplaceAll(u, "%7B", "{")
-	u = strings.ReplaceAll(u, "%7D", "}")
-	return u
+	return o.path.resource.expandToURL(o.path.name())
 }
 
 func (o *openapiOperation) Method() string {
@@ -428,7 +452,7 @@ func (o *openapiOperation) Security() (schemes []string) {
 		if len(el.Keys()) == 0 {
 			continue
 		}
-		s := o.resource.service.securityScheme(el.Keys()[0])
+		s := o.path.resource.service.securityScheme(el.Keys()[0])
 		if s != "" {
 			schemes = append(schemes, s)
 		}
@@ -452,18 +476,18 @@ func (o *openapiOperation) Scopes() (scopes []string) {
 
 func (o *openapiOperation) Parameters() (params []Schema) {
 	paramsRaw := o.schema.Get("parameters")
-	if paramsRaw.IsNil() {
-		return nil
-	}
-	for _, paramSchema := range paramsRaw.Items() {
-		param := &openapiParameter{
-			schema: paramSchema,
+	if !paramsRaw.IsNil() {
+		for _, paramSchema := range paramsRaw.Items() {
+			param := &openapiParameter{
+				schema: paramSchema,
+			}
+			if param.ReadOnly() {
+				continue
+			}
+			params = append(params, param)
 		}
-		if param.ReadOnly() {
-			continue
-		}
-		params = append(params, param)
 	}
+	params = append(params, o.path.sharedParams()...)
 	return
 }
 
@@ -514,7 +538,7 @@ func (o *openapiOperation) listingResponse() (*openapiSchema, bool) {
 		// response is an array
 		return resp, true
 	}
-	for _, name := range NameVariants(o.resource.name) {
+	for _, name := range NameVariants(o.path.resource.name) {
 		if s := resp.schema.Get("properties", name); !s.IsNil() && AsOrZero[string](s.Get("type")) == "array" {
 			// response has array under resource name or variant
 			return &openapiSchema{

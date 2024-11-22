@@ -1,26 +1,13 @@
 TODO
-- parameters at path level
-- multi paths, improved path detection
-  ItemURLs
-  CollectionURLs
 - fix github paths
 - fix digitalocean paths
 
 
 - sub resources
 - selecting into schemas, detailed props
-- accountData => subjectivePaths
-- dataScope => defaultPOV: subjective|objective|mixed
 
 
 ====
-dataScope: account|mixed| .. shared|public? 
-sharedData:
-  - 
-accountData:
-  - /user
-  - /user/*
-
 
 === RESOURCE OPERATIONS
 list~      List gists for this account

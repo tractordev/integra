@@ -1,4 +1,4 @@
 latest: "2"
-dataScope: account
-accountData:
+contentOrientation: relative
+relativeContentPaths:
   - ^/v2/customers/my/.*

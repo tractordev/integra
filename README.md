@@ -128,7 +128,23 @@ that is, endpoints that return data specific to the authenticated user. Some API
 `digitalocean`, this is every endpoint.
 
 This command requires access tokens to be present in the environment for the
-selected service.
+selected service. 
+
+## Concepts
+
+## Content Orientation
+
+Outside normal API modeling concepts, we introduce "content orientation",
+which is whether content in a response is `relative` or `absolute`.
+Relative content is specific to the authenticated user. Absolute content is content
+that is always the same. A collection of endpoints, such as endpoints associated with a
+resource or the API as whole, can also be `mixed`. 
+
+This is used to identify endpoints returning content owned by or associated with the 
+authenticated user. An API can have a content orientation to help classify it as
+an API for account-specific content (like DigitalOcean, or Google Calendar), or 
+content that is the same for everybody (like an RSS feed for a blog), or is both
+(like GitHub, or Spotify).
 
 ## Development
 
@@ -156,11 +172,11 @@ The minimal content of `meta.yaml` is a `latest` key with the major version dire
 name as a string value. This file will be used to add extra metadata to services. Here
 is the current data of `meta.yaml`:
 
-| Key         | Type                   | Description                                                                                |
-| ----------- | ---------------------- | ------------------------------------------------------------------------------------------ |
-| latest      | string                 | Required. The latest/default version directory to use.                                     |
-| dataScope   | string                 | Either "mixed" or "account". "account" means all resources are user-data. Default: "mixed" |
-| accountData | list of regexp strings | Matched paths are marked as "account" data scope (user-data)                               |
+| Key      | Type    | Description |
+| -------- | ------- | ------- |
+| latest  | string    | Required. The latest/default version directory to use. |
+| contentOrientation | string | Either "mixed", "relative", or "absolute". Default: "mixed" |
+| relativeContentPaths | list of regexp strings | Matched paths are marked "relative" |
 
 Once all this is set up, the service should be available to `integra describe` after rebuilding. Here is what you can
 run to make sure everything looks right:

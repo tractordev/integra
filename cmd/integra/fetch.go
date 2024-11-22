@@ -57,7 +57,7 @@ func fetchCmd() *cli.Command {
 
 			nonAccountResources := make(map[string]integra.Resource)
 			for _, r := range s.Resources() {
-				if accountData && r.DataScope() != "account" {
+				if accountData && r.Orientation() != "relative" {
 					nonAccountResources[r.Name()] = r
 					continue
 				}
@@ -68,7 +68,7 @@ func fetchCmd() *cli.Command {
 					// if filterOps != nil && !slices.Contains(filterOps, op.Name()) {
 					// 	continue
 					// }
-					if op.Name() != "list" && op.Name() != "get" {
+					if op.AbsName() != "list" && op.AbsName() != "get" {
 						continue
 					}
 
@@ -76,7 +76,7 @@ func fetchCmd() *cli.Command {
 						return !p.Required()
 					})
 
-					if op.Name() == "get" && len(params) > 0 {
+					if op.AbsName() == "get" && len(params) > 0 {
 						// only singleton resource get operations
 						continue
 					}
@@ -120,7 +120,7 @@ func fetchCmd() *cli.Command {
 							log.Fatal(err)
 						}
 
-						if op.Name() == "list" {
+						if op.AbsName() == "list" {
 							handleList(w, targetDir, op, jsonaccess.New(data), nonAccountResources)
 						} else {
 							fmt.Fprintf(w, "  singleton: %s \n", resp.Status)
