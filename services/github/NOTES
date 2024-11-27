@@ -267,3 +267,11 @@ _starred
     put
 
 
+====
+
+userMigrationRepoLock not parented to expected userMigrationRepository
+
+https://api.github.com/user/migrations/{migration_id}/repositories
+https://api.github.com/user/migrations/{migration_id}/repos/{repo_name}/lock
+
+parent is using full name instead of abbreviated "repos"

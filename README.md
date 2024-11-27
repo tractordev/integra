@@ -176,7 +176,11 @@ is the current data of `meta.yaml`:
 | -------- | ------- | ------- |
 | latest  | string    | Required. The latest/default version directory to use. |
 | contentOrientation | string | Either "mixed", "relative", or "absolute". Default: "mixed" |
+| extendBaseTo | string | String to add to base URL and trim from paths (ex: "/v2") |
 | relativeContentPaths | list of regexp strings | Matched paths are marked "relative" |
+| forceMethodOpName | object of path->method->opName | Forces operation name for HTTP method of path |
+| forceParent | object of resource name to resource name | Forces new parent of resource or "" for no parent |
+| forceItemPaths | object of path to boolean | Forces path to item path or collection path |
 
 Once all this is set up, the service should be available to `integra describe` after rebuilding. Here is what you can
 run to make sure everything looks right:

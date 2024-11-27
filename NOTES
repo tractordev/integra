@@ -1,34 +1,16 @@
 TODO
-- fix github paths
-- fix digitalocean paths
+- fix fetching, use parent ids
+- paging strategies
+- normalized fetch dirs
 
-
-- sub resources
+- sub resources based names
 - selecting into schemas, detailed props
 
+===
+MCP (model context protocol)
+- resources (read-only, notifications?)
+- tools (mutations/side-effect/write operations)
 
-====
-
-=== RESOURCE OPERATIONS
-list~      List gists for this account
-update~    Update a gist for this account
-delete    Delete a gist
-list      List public gists
-update    Update a gist
-get       Get a gist 
-
-
-github.~gist.list
-github.gist.~list
-github.gist.list~
-
-=== RESOURCE INFO
-Title:             Gist
-Description:       Gist Simple
-Tags:              gists
-List URLs:          https://api.github.com/gists
-Item URLs:          https://api.github.com/gists/{gist_id} 
-                    https://api.github.com/gists/{gist_id}/{sha}
 
 ====
 

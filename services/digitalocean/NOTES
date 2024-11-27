@@ -1,6 +1,6 @@
 TODO:
 * unwrap gets in object with key name of resource (floating_ip, image, etc)
-* ambiguous creates for dropletAction and volumeAction
+
 
 listings:
 
@@ -139,6 +139,7 @@ list      List All Actions for a Volume
 create    Initiate A Block Storage Action By Volume Id
 get       Retrieve an Existing Volume Action
 
+## RESOLVED
 
 =====
 2024/11/15 17:59:33 openapi.go:179: !! undetectable paths for 'kuberneteClusterUpgrade':
@@ -182,3 +183,28 @@ an exact match should be the answer!
 
 invoice.list
   20 invoices, [invoice_uuid] => map[invoice_uuid:] 
+
+----
+added "Bulk" suffix to operation name duplicates (puts on shorter path), assuming
+more likely to be more general. but here is an example where its not quite right:
+
+digitalocean.volumeAction
+
+createBulk    Initiate A Block Storage Action By Volume Name
+
+its not bulk, its ByName
+
+here are other resources Bulk suffix is added in digitalocean:
+
+
+droplet (only one that works with "Bulk")
+dropletAction (also basically works)
+volume (also wrong, should be "by name")
+
+UPDATE: commented this strategy out for now, back to duplicate operation names
+
+## RESOLVED with forcedOpNames
+
+--
+====
+

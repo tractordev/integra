@@ -1,4 +1,16 @@
 latest: "2"
 contentOrientation: relative
+extendBaseTo: /v2
+forceParent:
+  customerMyBalance: ""
+  customerMyBillingHistory: ""
+  customerMyInvoice: ""
+forceItemPaths:
+  "/registry/{registry_name}/garbage-collection": true
 relativeContentPaths:
-  - ^/v2/customers/my/.*
+  - ^/customers/my/.*
+forceMethodOpName:
+  "/droplets/actions":
+    post: "createForTag"
+  "/volumes/actions":
+    post: "createByName"

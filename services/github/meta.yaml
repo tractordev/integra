@@ -1,9 +1,19 @@
 latest: "1"
 relativeContentPaths:
   - ^/user$
+  - ^/app$
   - ^/user/.*
   - ^/rate_limit$
   - ^/gists$
   - ^/gists/starred$
   - ^/issues$
   - ^/notifications$
+forceMethodOpName:
+  "/repos/{owner}/{repo}":
+    get: "get" # otherwise will be getWithRepo because double base params
+  "/repos/{owner}/{repo}/pulls/{pull_number}/comments":
+    get: "listForPull"
+  "/repos/{owner}/{repo}/issues/{issue_number}/comments":
+    get: "listForIssue"
+  "/repos/{owner}/{repo}/issues/{issue_number}/events":
+    get: "listForIssue"

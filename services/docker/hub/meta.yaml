@@ -1,1 +1,8 @@
 latest: "2"
+forceParent:
+  scim20Resourcetype: ""
+  scim20Schema: ""
+  scim20Serviceproviderconfig: ""
+  scim20User: ""
+  userLogin: ""
+  user2FALogin: ""
