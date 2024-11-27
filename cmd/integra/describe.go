@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"slices"
-	"sort"
 	"strings"
 	"text/tabwriter"
 
@@ -128,32 +127,38 @@ func describeServiceResources(s integra.Service) {
 	}
 
 	// if no tags, just list resources
-	if len(tagGroups) == 0 {
-		for _, r := range res {
+	// if len(tagGroups) == 0 {
+	for _, r := range res {
+		if showResources {
 			fmt.Println(r.Name())
+		} else {
+			if r.Parent() == nil {
+				fmt.Println(r.Name())
+			}
 		}
-		fmt.Println()
-		return
 	}
+	fmt.Println()
+	return
+	// }
 
 	// otherwise, list resources grouped by tag
-	var sortedTags []string
-	for tag := range tagGroups {
-		sortedTags = append(sortedTags, tag)
-	}
-	sort.Strings(sortedTags)
-	for _, tag := range sortedTags {
-		resources := tagGroups[tag]
-		sort.Slice(resources, func(i, j int) bool {
-			return resources[i].Name() < resources[j].Name()
-		})
+	// var sortedTags []string
+	// for tag := range tagGroups {
+	// 	sortedTags = append(sortedTags, tag)
+	// }
+	// sort.Strings(sortedTags)
+	// for _, tag := range sortedTags {
+	// 	resources := tagGroups[tag]
+	// 	sort.Slice(resources, func(i, j int) bool {
+	// 		return resources[i].Name() < resources[j].Name()
+	// 	})
 
-		fmt.Println(strings.ToUpper(tag))
-		for _, resource := range resources {
-			fmt.Printf("  %s\n", resource.Name())
-		}
-		fmt.Println()
-	}
+	// 	fmt.Println(strings.ToUpper(tag))
+	// 	for _, resource := range resources {
+	// 		fmt.Printf("  %s\n", resource.Name())
+	// 	}
+	// 	fmt.Println()
+	// }
 }
 
 func describeService(service integra.Service) {
@@ -202,10 +207,22 @@ func describeResourceInfo(r integra.Resource) {
 	}
 	fmt.Fprintf(w, "Orientation:\t%s\n", r.Orientation())
 	if len(r.CollectionURLs()) > 0 {
-		fmt.Fprintf(w, "Collection URLs:\t%s\n", strings.Join(r.CollectionURLs(), ", "))
+		urls := r.CollectionURLs()
+		fmt.Fprintf(w, "Collection URLs:\t%s\n", urls[0])
+		if len(urls) > 1 {
+			for _, u := range urls[1:] {
+				fmt.Fprintf(w, "\t%s\n", u)
+			}
+		}
 	}
 	if len(r.ItemURLs()) > 0 {
-		fmt.Fprintf(w, "Item URLs:\t%s\n", strings.Join(r.ItemURLs(), ", "))
+		urls := r.ItemURLs()
+		fmt.Fprintf(w, "Item URLs:\t%s\n", urls[0])
+		if len(urls) > 1 {
+			for _, u := range urls[1:] {
+				fmt.Fprintf(w, "\t%s\n", u)
+			}
+		}
 	}
 	fmt.Fprintln(w)
 }
