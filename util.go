@@ -33,6 +33,7 @@ var invariants = map[string]bool{
 	"previous":   true,
 	"dangerous":  true,
 	"kubernetes": true,
+	"meta":       true,
 }
 
 func isAcronym(s string) bool {
