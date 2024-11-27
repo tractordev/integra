@@ -61,11 +61,11 @@ func LoadService(name, version string) (Service, error) {
 		return nil, err
 	}
 
-	var metaRaw map[string]any
-	if err := yaml.Unmarshal(b, &metaRaw); err != nil {
+	var yamlData map[any]any
+	if err := yaml.Unmarshal(b, &yamlData); err != nil {
 		return nil, err
 	}
-	meta := jsonaccess.New(metaRaw)
+	meta := jsonaccess.New(convertYAMLToStringMap(yamlData))
 
 	if version == "" {
 		version = jsonaccess.MustAs[string](meta.Get("latest"))
