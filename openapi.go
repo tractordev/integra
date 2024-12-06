@@ -198,14 +198,27 @@ func (r *openapiResource) Subresources() (res []Resource) {
 	return
 }
 
+func (r *openapiResource) Superset() Resource {
+	superset := r.service.meta.Get("supersets", r.Name())
+	if !superset.IsNil() {
+		supersetName := AsOrZero[string](superset)
+		if supersetName == "" {
+			return nil
+		}
+		rr, err := r.service.Resource(supersetName)
+		if err != nil {
+			log.Printf("!! unable to link superset on '%s': %w\n", r.Name(), err)
+		} else {
+			return rr
+		}
+	}
+	return nil
+}
+
 func (r *openapiResource) Parent() Resource {
 	if r.useCachedParent {
 		return r.cachedParent
 	}
-
-	defer func() {
-		r.useCachedParent = true
-	}()
 
 	reparent := r.service.meta.Get("forceParent", r.Name())
 	if !reparent.IsNil() {
@@ -217,10 +230,13 @@ func (r *openapiResource) Parent() Resource {
 		if err != nil {
 			log.Printf("!! unable to reparent '%s': %w\n", r.Name(), err)
 		} else {
-			r.cachedParent = rr
 			return rr
 		}
 	}
+
+	defer func() {
+		r.useCachedParent = true
+	}()
 
 	var shortestPath *openapiPath
 	if r.Orientation() == "relative" {
@@ -691,11 +707,6 @@ func (o *openapiOperation) Response() Schema {
 	if resp == nil {
 		return nil
 	}
-	// if o.Output().Name() == resp.Name() {
-	// 	// if output is the response,
-	// 	// we don't need response
-	// 	return nil
-	// }
 	return resp
 }
 
@@ -709,6 +720,47 @@ func (o *openapiOperation) responseSchema() *openapiSchema {
 		op:     o,
 		schema: s,
 	}
+}
+
+func (o *openapiOperation) unwrappedItem() (*openapiSchema, bool) {
+	wrapsRaw := o.Resource().Service().Meta().Get("wrapsItems")
+	if wrapsRaw.IsNil() {
+		return nil, false
+	}
+	wraps := MustAs[bool](wrapsRaw)
+	if !wraps {
+		return nil, false
+	}
+	resp := o.responseSchema()
+	if resp == nil {
+		return nil, false
+	}
+
+	// look for prop by name of resource
+	for _, name := range NameVariants(o.path.resource.name) {
+		if s := resp.schema.Get("properties", name); !s.IsNil() && AsOrZero[string](s.Get("type")) == "object" {
+			// response has item under resource name or variant
+			return &openapiSchema{
+				name:   name,
+				op:     o,
+				schema: s,
+			}, true
+		}
+	}
+
+	// look for "item" prop
+	if s := resp.schema.Get("properties", "item"); !s.IsNil() && AsOrZero[string](s.Get("type")) == "object" {
+		// response has item under "item" key
+		return &openapiSchema{
+			name:   "item",
+			op:     o,
+			schema: s,
+		}, true
+	}
+
+	// TODO: more item unwrapping strategies
+
+	return nil, false
 }
 
 func (o *openapiOperation) listingResponse() (*openapiSchema, bool) {
@@ -751,6 +803,10 @@ func (o *openapiOperation) Output() Schema {
 	resp := o.responseSchema()
 	if resp == nil {
 		return nil
+	}
+	i, isWrapped := o.unwrappedItem()
+	if isWrapped {
+		return i
 	}
 	return resp
 }

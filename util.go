@@ -187,6 +187,12 @@ func NameVariants(s string) (variants []string) {
 		}
 	}
 
+	// variants based on last word if more than one,
+	// so fooBar => bar, bars
+	if len(parts) > 1 {
+		variants = append(variants, NameVariants(parts[len(parts)-1])...)
+	}
+
 	slices.Sort(variants)
 
 	return slices.Compact(variants)
@@ -265,4 +271,53 @@ func isLetter(r rune) bool {
 
 func isDigit(r rune) bool {
 	return r >= '0' && r <= '9'
+}
+
+func ResourceParents(r Resource) (parents []Resource) {
+	cur := r
+	for cur.Parent() != nil {
+		parents = append(parents, cur.Parent())
+		cur = cur.Parent()
+	}
+	return
+}
+
+func walkResources(res []Resource, fn func(r Resource)) {
+	for _, r := range res {
+		fn(r)
+		sub := r.Subresources()
+		if len(sub) > 0 {
+			walkResources(sub, fn)
+		}
+	}
+}
+
+func WalkResources(s Service, fn func(r Resource)) {
+	for _, r := range s.Resources() {
+		if r.Parent() == nil {
+			fn(r)
+			walkResources(r.Subresources(), fn)
+		}
+	}
+}
+
+func RequiredParameters(op Operation) []Schema {
+	return slices.DeleteFunc(op.Parameters(), func(p Schema) bool {
+		return !p.Required()
+	})
+}
+
+func ResourceGetter(r Resource) Operation {
+	op, err := r.Operation("get")
+	if err == nil {
+		return op
+	}
+	op, err = r.Operation("get~")
+	if err == nil {
+		return op
+	}
+	if r.Superset() != nil {
+		return ResourceGetter(r.Superset())
+	}
+	return nil
 }

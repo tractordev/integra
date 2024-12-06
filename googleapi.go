@@ -119,6 +119,10 @@ func (r *googleResource) Parent() Resource {
 	return r.parent
 }
 
+func (r *googleResource) Superset() Resource {
+	return nil
+}
+
 func (r *googleResource) Subresources() []Resource {
 	// TODO
 	return nil

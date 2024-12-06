@@ -145,7 +145,7 @@ func ExpandURL(u string, params map[string]any) (string, error) {
 	return u, nil
 }
 
-func MakeRequest(op Operation, data map[string]any) (*http.Request, error) {
+func MakeRequest(op Operation, in map[string]any) (*http.Request, error) {
 
 	var required []string
 	for _, p := range op.Parameters() {
@@ -155,10 +155,15 @@ func MakeRequest(op Operation, data map[string]any) (*http.Request, error) {
 	}
 
 	for _, name := range required {
-		_, ok := data[name]
+		_, ok := in[name]
 		if !ok {
 			return nil, fmt.Errorf("missing '%s' of required parameters: %v", name, required)
 		}
+	}
+
+	data := make(map[string]any)
+	for k, v := range in {
+		data[k] = v
 	}
 
 	params := make(map[string]any)

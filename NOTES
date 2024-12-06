@@ -1,7 +1,12 @@
 TODO
-- fix fetching, use parent ids
 - paging strategies
-- normalized fetch dirs
+- write dataset to disk
+
+- GH: issue,userRepo: multikey resource (repo)
+- DO: monitoringAlert, accountKey: listing under array prop
+- DO: tag: tag_id is tag_name, "name" as key
+- spotify: reauth, fix fetch
+- fetch subresources of fetched resource??
 
 - sub resources based names
 - selecting into schemas, detailed props

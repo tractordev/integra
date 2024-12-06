@@ -17,11 +17,13 @@ type Service interface {
 	Resource(name string) (Resource, error)
 
 	Schema() *jsonaccess.Value
+	Meta() *jsonaccess.Value
 }
 
 type Resource interface {
 	Service() Service
 	Parent() Resource
+	Superset() Resource
 	Name() string
 	Title() string
 	Description() string

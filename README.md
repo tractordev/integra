@@ -181,6 +181,8 @@ is the current data of `meta.yaml`:
 | forceMethodOpName | object of path->method->opName | Forces operation name for HTTP method of path |
 | forceParent | object of resource name to resource name | Forces new parent of resource or "" for no parent |
 | forceItemPaths | object of path to boolean | Forces path to item path or collection path |
+| wrapsItems | boolean | If items are wrapped in a response object. Default: false | 
+| supersets | object of resource name to resource name | Set superset resource for resources by name |
 
 Once all this is set up, the service should be available to `integra describe` after rebuilding. Here is what you can
 run to make sure everything looks right:

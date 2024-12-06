@@ -202,6 +202,9 @@ func describeResourceInfo(r integra.Resource) {
 	if r.Parent() != nil {
 		fmt.Fprintf(w, "Parent:\t%s\n", r.Parent().Name())
 	}
+	if r.Superset() != nil {
+		fmt.Fprintf(w, "Superset:\t%s\n", r.Superset().Name())
+	}
 	if len(r.Tags()) > 0 {
 		fmt.Fprintf(w, "Tags:\t%s\n", strings.Join(r.Tags(), ", "))
 	}
@@ -285,6 +288,7 @@ func describeOperationInfo(op integra.Operation) {
 	}
 	fmt.Fprintf(w, "Endpoint:\t%s\n", op.URL())
 	fmt.Fprintf(w, "Method:\t%s\n", op.Method())
+	fmt.Fprintf(w, "Orientation:\t%s\n", op.Orientation())
 	if len(op.Tags()) > 0 {
 		fmt.Fprintf(w, "Tags:\t%s\n", strings.Join(op.Tags(), ", "))
 	}
