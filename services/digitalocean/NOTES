@@ -208,3 +208,30 @@ UPDATE: commented this strategy out for now, back to duplicate operation names
 --
 ====
 
+uptimeCheck.list
+  ERROR: no listing found in response
+
+listing is under "checks" key but resource name is "uptimeCheck", no parent.
+need name variant generator to break words apart...
+
+## RESOLVED, but now:
+
+monitoringAlert.list
+  ERROR: no listing found in response
+
+listing is under "policies", totally unrelated name. need manual listing keys.
+also:
+
+accountKey.list
+  ERROR: no listing found in response
+
+listing is under "ssh_keys"
+
+maybe go back to look for array prop?
+
+===
+
+tag.list
+  SKIP: unable to determine key props for getter: tag_id
+
+listing output has no id, but has name. tag_id is actually tag_name!

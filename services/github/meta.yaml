@@ -17,3 +17,12 @@ forceMethodOpName:
     get: "listForIssue"
   "/repos/{owner}/{repo}/issues/{issue_number}/events":
     get: "listForIssue"
+supersets:
+  userRepo: repo
+  userTeam: team
+  userGist: gist
+  userProject: project
+  userOrg: org
+  userIssue: repoIssue
+  issue: repoIssue
+  

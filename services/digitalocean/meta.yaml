@@ -5,6 +5,18 @@ forceParent:
   customerMyBalance: ""
   customerMyBillingHistory: ""
   customerMyInvoice: ""
+  monitoringMetricDropletBandwidth: ""
+  monitoringMetricDropletCPU: ""
+  monitoringMetricDropletFilesystemFree: ""
+  monitoringMetricDropletFilesystemSize: ""
+  monitoringMetricDropletLoad1: ""
+  monitoringMetricDropletLoad15: ""
+  monitoringMetricDropletLoad5: ""
+  monitoringMetricDropletMemoryAvailable: ""
+  monitoringMetricDropletMemoryCached: ""
+  monitoringMetricDropletMemoryFree: ""
+  monitoringMetricDropletMemoryTotal: ""
+  kubernetesCluster: ""
 forceItemPaths:
   "/registry/{registry_name}/garbage-collection": true
 relativeContentPaths:
@@ -14,3 +26,4 @@ forceMethodOpName:
     post: "createForTag"
   "/volumes/actions":
     post: "createByName"
+wrapsItems: true
